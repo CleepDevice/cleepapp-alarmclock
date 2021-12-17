@@ -1,6 +1,6 @@
 # Alarm clock
 
-Alarm clock application for Cleep. It allows to trigger and schedule alarms.
+Simple alarm clock application for Cleep. It allows to trigger and schedule alarms.
 
 ![alt text](https://github.com/tangb/cleepapp-alarmclock/raw/master/resources/alarmclock.jpg)
 
