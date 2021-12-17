@@ -15,7 +15,7 @@ class Alarmclock(CleepModule):
 
     MODULE_LABEL = "Alarm clock"
     MODULE_AUTHOR = "Cleep"
-    MODULE_VERSION = "0.0.0"
+    MODULE_VERSION = "1.0.0"
     MODULE_DEPS = []
     MODULE_DESCRIPTION = "Build your own smart alarm clock"
     MODULE_LONGDESCRIPTION = "Configure time to wake up with music everyday"

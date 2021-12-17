@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [UNRELEASED] - 2021-11-26
+## [1.0.0] - 2021-12-18
 
 ### Added
 - First release
