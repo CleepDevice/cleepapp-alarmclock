@@ -1,0 +1,14 @@
+{
+    "icon": "alarm",
+    "global": {
+        "js": ["alarmclock.service.js", "alarmclock.widget.js"],
+        "html": ["alarmclock.widget.html"],
+        "css": []
+    },
+    "config": {
+        "js": ["alarmclock.config.js"],
+        "html": ["alarmclock.config.html"],
+        "css": []
+    }
+}
+    
