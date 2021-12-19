@@ -18,7 +18,7 @@ class Alarmclock(CleepModule):
     MODULE_VERSION = "1.0.0"
     MODULE_DEPS = []
     MODULE_DESCRIPTION = "Build your own smart alarm clock"
-    MODULE_LONGDESCRIPTION = "Configure time to wake up with music everyday"
+    MODULE_LONGDESCRIPTION = "Configure time to wake up everyday"
     MODULE_TAGS = ["wakeup", "music"]
     MODULE_CATEGORY = CATEGORIES.APPLICATION
     MODULE_URLINFO = "https://github.com/tangb/cleepapp-alarmclock"
@@ -39,7 +39,6 @@ class Alarmclock(CleepModule):
         5: "sat",
         6: "sun",
     }
-    ALLOWED_MUSIC_EXTENSIONS = ["mp3", "flac", "aac", "ogg"]
 
     def __init__(self, bootstrap, debug_enabled):
         """
@@ -234,32 +233,6 @@ class Alarmclock(CleepModule):
             raise CommandError("Error updating alarm")
 
         return enabled
-
-    def get_music_tracks(self):
-        """
-        Get all music tracks
-
-        Returns:
-            list: list of tracks::
-
-            [
-                {
-                    filename (string): filename
-                    path (string): full filepath
-                },
-                ...
-            ]
-
-        """
-        tracks = []
-
-        for root, _, files in os.walk(self.STORAGE_PATH):
-            for filename in files:
-                tracks.append(
-                    {"filename": filename, "path": os.path.join(root, filename)}
-                )
-
-        return tracks
 
     @staticmethod
     def _check_days_validator(days):

@@ -260,6 +260,8 @@ class TestAlarmclock(unittest.TestCase):
         today = datetime.date(2021,12,15)
         date_mock.today.return_value = today
         self.init(start=False, mocks=False)
+        is_module_loaded = self.session.make_mock_command('is_module_loaded', True)
+        self.session.add_mock_command(is_module_loaded)
         is_non_working_day_mock = self.session.make_mock_command('is_non_working_day', True)
         self.session.add_mock_command(is_non_working_day_mock)
         self.module._set_today_is_non_working_day = Mock()
@@ -276,6 +278,8 @@ class TestAlarmclock(unittest.TestCase):
         today = datetime.date(2021,12,15)
         date_mock.today.return_value = today
         self.init(start=False, mocks=False)
+        is_module_loaded = self.session.make_mock_command('is_module_loaded', True)
+        self.session.add_mock_command(is_module_loaded)
         is_non_working_day_mock = self.session.make_mock_command('is_non_working_day', True, fail=True)
         self.session.add_mock_command(is_non_working_day_mock)
         self.module._set_today_is_non_working_day = Mock()
@@ -389,7 +393,7 @@ class TestAlarmclock(unittest.TestCase):
             'type': 'alarmclock',
             'name': 'Alarm',
             'enabled': True,
-            'nonWorkingDays': False,
+            'nonWorkingDays': True,
             'time': {
                 'hour': 12,
                 'minute': 0,
