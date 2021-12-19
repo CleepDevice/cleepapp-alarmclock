@@ -6,7 +6,9 @@ import datetime
 import sys
 sys.path.append('../')
 from backend.alarmclock import Alarmclock
-# from backend.audioplayerplaybackupdateevent import AudioplayerPlaybackUpdateEvent
+from backend.alarmclockalarmtriggeredevent import AlarmclockAlarmTriggeredEvent
+from backend.alarmclockalarmscheduledevent import AlarmclockAlarmScheduledEvent
+from backend.alarmclockalarmstoppedevent import AlarmclockAlarmStoppedEvent
 from cleep.exception import InvalidParameter, MissingParameter, CommandError, Unauthorized
 from cleep.libs.tests import session
 from mock import Mock, patch, MagicMock
@@ -633,24 +635,56 @@ class TestAlarmclock(unittest.TestCase):
         
 
 
-"""
-class TestAudioplayerPlaybackUpdateEvent(unittest.TestCase):
+class TestAlarmclockAlarmTriggeredEvent(unittest.TestCase):
 
     def setUp(self):
         logging.basicConfig(level=logging.FATAL, format='%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s')
         self.session = session.TestSession(self)
-        self.event = self.session.setup_event(AudioplayerPlaybackUpdateEvent)
+        self.event = self.session.setup_event(AlarmclockAlarmTriggeredEvent)
 
     def test_event_params(self):
         self.assertEqual(self.event.EVENT_PARAMS, [
-            "playeruuid",
-            "state",
+            "hour",
+            "minute",
             "duration",
-            "track",
-            "metadata",
-            "index",
         ])
-"""
+
+
+
+
+
+class TestAlarmclockAlarmScheduledEvent(unittest.TestCase):
+
+    def setUp(self):
+        logging.basicConfig(level=logging.FATAL, format='%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s')
+        self.session = session.TestSession(self)
+        self.event = self.session.setup_event(AlarmclockAlarmScheduledEvent)
+
+    def test_event_params(self):
+        self.assertEqual(self.event.EVENT_PARAMS, [
+            "hour",
+            "minute",
+            "duration",
+        ])
+
+
+
+
+
+class TestAlarmclockAlarmStoppedEvent(unittest.TestCase):
+
+    def setUp(self):
+        logging.basicConfig(level=logging.FATAL, format='%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s')
+        self.session = session.TestSession(self)
+        self.event = self.session.setup_event(AlarmclockAlarmStoppedEvent)
+
+    def test_event_params(self):
+        self.assertEqual(self.event.EVENT_PARAMS, [
+            "hour",
+            "minute",
+            "duration",
+            "snoozed",
+        ])
 
 if __name__ == '__main__':
     # coverage run --omit="*/lib/python*/*","test_*" --concurrency=thread test_alarmclock.py; coverage report -m -i
