@@ -3,6 +3,7 @@
 
 from datetime import date, timedelta, datetime
 import os
+from threading import Timer
 from cleep.exception import CommandError
 from cleep.common import CATEGORIES
 from cleep.core import CleepModule
@@ -57,6 +58,7 @@ class Alarmclock(CleepModule):
         }
         self.has_audioplayer = False
         self.audioplayer_uuid = None
+        self.stop_timers = {}
 
         self.alarm_triggered_event = self._get_event("alarmclock.alarm.triggered")
         self.alarm_scheduled_event = self._get_event("alarmclock.alarm.scheduled")
@@ -313,13 +315,20 @@ class Alarmclock(CleepModule):
             )
             self._schedule_alarm()
 
-    def _stop_alarm(self, alarm_uuid):
+            self.stop_timers[alarm_uuid] = Timer(alarm["duration"] * 60, self._stop_alarm, alarm_uuid)
+            self.stop_timers[alarm_uuid].start()
+
+    def _stop_alarm(self, alarm_uuid, snoozed=False):
         """
         Stop specified alarm
 
         Args:
             alarm_uuid (string): alarm identifier
         """
+        if self.stop_timers.get(alarm_uuid):
+            self.stop_timers[alarm_uuid].cancel()
+            del self.stop_timers[alarm_uuid]
+
         alarm = self._get_device(alarm_uuid)
         if not alarm:
             self.logger.warning(
@@ -332,6 +341,7 @@ class Alarmclock(CleepModule):
                 "hour": alarm["time"]["hour"],
                 "minute": alarm["time"]["minute"],
                 "duration": alarm["duration"],
+                "snoozed": snoozed,
             },
             device_id=alarm_uuid,
         )

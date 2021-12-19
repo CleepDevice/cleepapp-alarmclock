@@ -292,9 +292,10 @@ class TestAlarmclock(unittest.TestCase):
         except:
             self.fail('_set_tomorrow_is_non_working_day should not raise exception')
 
-    def test__trigger_alarm(self):
+    @patch('backend.alarmclock.Timer')
+    def test__trigger_alarm(self, timer_mock):
         self.init()
-        self.module._add_device({
+        alarm = self.module._add_device({
             'type': 'alarmclock',
             'name': 'Alarm',
             'enabled': True,
@@ -318,6 +319,7 @@ class TestAlarmclock(unittest.TestCase):
             'minute': 0,
             'duration': 10,
         })
+        timer_mock.assert_called_with(600, self.module._stop_alarm, alarm['uuid'])
 
     def test__trigger_alarm_with_alarm_disabled(self):
         self.init()
@@ -426,6 +428,8 @@ class TestAlarmclock(unittest.TestCase):
             'duration': 10,
         }
         self.module._get_device = Mock(return_value=device)
+        timer_mock = Mock()
+        self.module.stop_timers['1234567789'] = timer_mock
 
         self.module._stop_alarm('1234567789')
 
@@ -433,7 +437,10 @@ class TestAlarmclock(unittest.TestCase):
             'hour': 12,
             'minute': 0,
             'duration': 10,
+            'snoozed': False,
         })
+        timer_mock.cancel.assert_called()
+        self.assertEqual(len(self.module.stop_timers.keys()), 0)
 
     def test__stop_alarm_alarm_not_found(self):
         self.init()
