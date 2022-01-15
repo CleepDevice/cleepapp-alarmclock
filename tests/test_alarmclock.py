@@ -105,18 +105,23 @@ class TestAlarmclock(unittest.TestCase):
         self.module._add_device = Mock(return_value={'uuid': '12345678'})
         time_ = {'hour': 1, 'minute': 1}
         days = {'mon': True, 'tue': False, 'wed': True, 'thu': False, 'fri': True, 'sat': False, 'sun': True}
+        self.module.tomorrow = {
+            'date': datetime.date(2021, 12, 16),
+            'nonWorkingDay': False
+        }
 
-        result = self.module.add_alarm(time_, 10, days, False)
+        result = self.module.add_alarm(time_, 10, days, False, 50)
 
         self.assertEqual(result, '12345678')
         self.module._add_device.assert_called_with({
             'time': time_,
-            'duration': 10,
+            'timeout': 10,
             'days': days,
             'nonWorkingDays': False,
             'type': 'alarmclock',
             'name': 'Alarm',
             'enabled': True,
+            'volume': 50,
         })
 
     def test_add_alarm_failed(self):
@@ -126,7 +131,7 @@ class TestAlarmclock(unittest.TestCase):
         days = {'mon': True, 'tue': False, 'wed': True, 'thu': False, 'fri': True, 'sat': False, 'sun': True}
 
         with self.assertRaises(CommandError) as cm:
-            self.module.add_alarm(time_, 10, days, False)
+            self.module.add_alarm(time_, 10, days, False, 50)
         self.assertEqual(str(cm.exception), 'Error adding alarm')
 
     def test_add_alarm_invalid_parameters(self):
@@ -136,38 +141,48 @@ class TestAlarmclock(unittest.TestCase):
         days = {'mon': True, 'tue': False, 'wed': True, 'thu': False, 'fri': True, 'sat': False, 'sun': True}
 
         with self.assertRaises(MissingParameter) as cm:
-            self.module.add_alarm(None, 10, days, False)
+            self.module.add_alarm(None, 10, days, False, 50)
         self.assertEqual(str(cm.exception), 'Parameter "alarm_time" is missing')
         with self.assertRaises(MissingParameter) as cm:
-            self.module.add_alarm(time_, None, days, False)
-        self.assertEqual(str(cm.exception), 'Parameter "duration" is missing')
+            self.module.add_alarm(time_, None, days, False, 50)
+        self.assertEqual(str(cm.exception), 'Parameter "timeout" is missing')
         with self.assertRaises(MissingParameter) as cm:
-            self.module.add_alarm(time_, 10, None, False)
+            self.module.add_alarm(time_, 10, None, False, 50)
         self.assertEqual(str(cm.exception), 'Parameter "days" is missing')
         with self.assertRaises(MissingParameter) as cm:
-            self.module.add_alarm(time_, 10, days, None)
+            self.module.add_alarm(time_, 10, days, None, 50)
         self.assertEqual(str(cm.exception), 'Parameter "non_working_days" is missing')
+        with self.assertRaises(MissingParameter) as cm:
+            self.module.add_alarm(time_, 10, days, False, None)
+        self.assertEqual(str(cm.exception), 'Parameter "volume" is missing')
 
         with self.assertRaises(InvalidParameter) as cm:
-            self.module.add_alarm({}, 10, days, False)
+            self.module.add_alarm({}, 10, days, False, 50)
         self.assertEqual(str(cm.exception), 'Parameter "alarm_time" is invalid (specified="{}")')
         with self.assertRaises(InvalidParameter) as cm:
-            self.module.add_alarm({'hour':1, 'minutes': 1}, 10, days, False)
+            self.module.add_alarm({'hour':1, 'minutes': 1}, 10, days, False, 50)
         self.assertEqual(str(cm.exception), 'Parameter "alarm_time" is invalid (specified="{\'hour\': 1, \'minutes\': 1}")')
         with self.assertRaises(InvalidParameter) as cm:
-            self.module.add_alarm({'hour':1, 'minutes': '1'}, 10, days, False)
+            self.module.add_alarm({'hour':1, 'minutes': '1'}, 10, days, False, 50)
         self.assertEqual(str(cm.exception), 'Parameter "alarm_time" is invalid (specified="{\'hour\': 1, \'minutes\': \'1\'}")')
 
         with self.assertRaises(InvalidParameter) as cm:
-            self.module.add_alarm(time_, 10, {'mon': True, 'other': True}, False)
+            self.module.add_alarm(time_, 10, {'mon': True, 'other': True}, False, 50)
         self.assertEqual(str(cm.exception), 'Parameter "days" is invalid or no day is selected')
         with self.assertRaises(InvalidParameter) as cm:
-            self.module.add_alarm(time_, 10, {'mon': False, 'tue': False, 'wed': False, 'thu': False, 'fri': False, 'sat': False, 'sun': False}, False)
+            self.module.add_alarm(time_, 10, {'mon': False, 'tue': False, 'wed': False, 'thu': False, 'fri': False, 'sat': False, 'sun': False}, False, 50)
         self.assertEqual(str(cm.exception), 'Parameter "days" is invalid or no day is selected')
 
         with self.assertRaises(InvalidParameter) as cm:
-            self.module.add_alarm(time_, -2, days, False)
-        self.assertEqual(str(cm.exception), 'Duration must be greater or equal to 0')
+            self.module.add_alarm(time_, -2, days, False, 50)
+        self.assertEqual(str(cm.exception), 'Timeout must be greater or equal to 0')
+
+        with self.assertRaises(InvalidParameter) as cm:
+            self.module.add_alarm(time_, 10, days, False, 0)
+        self.assertEqual(str(cm.exception), 'Volume must be between 1 and 100')
+        with self.assertRaises(InvalidParameter) as cm:
+            self.module.add_alarm(time_, 10, days, False, 101)
+        self.assertEqual(str(cm.exception), 'Volume must be between 1 and 100')
 
     def test_remove_alarm(self):
         self.init()
@@ -304,8 +319,9 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 0,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': True, 'wed': True, 'thu': True, 'fri': True, 'sat': True, 'sun': True},
+            'volume': 50,
         })
         self.module.tomorrow = {
             'date': datetime.date(2021, 12, 16),
@@ -317,9 +333,10 @@ class TestAlarmclock(unittest.TestCase):
         self.session.assert_event_called_with('alarmclock.alarm.triggered', {
             'hour': 12,
             'minute': 0,
-            'duration': 10,
+            'timeout': 10,
+            'volume': 50,
         })
-        timer_mock.assert_called_with(600, self.module._stop_alarm, alarm['uuid'])
+        timer_mock.assert_called_with(600, self.module._stop_alarm, [alarm['uuid']])
 
     def test__trigger_alarm_with_alarm_disabled(self):
         self.init()
@@ -332,7 +349,7 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 0,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': True, 'wed': True, 'thu': True, 'fri': True, 'sat': True, 'sun': True},
         })
         self.module.tomorrow = {
@@ -355,7 +372,7 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 12,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': True, 'wed': True, 'thu': True, 'fri': True, 'sat': True, 'sun': True},
         })
         self.module.tomorrow = {
@@ -378,7 +395,7 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 0,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': True, 'wed': True, 'thu': True, 'fri': True, 'sat': True, 'sun': True},
         })
         self.module.tomorrow = {
@@ -402,7 +419,7 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 0,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': False, 'wed': True, 'thu': True, 'fri': True, 'sat': True, 'sun': True},
         })
         self.module.tomorrow = {
@@ -425,7 +442,8 @@ class TestAlarmclock(unittest.TestCase):
                 'minute': 0,
             },
             'enabled': True,
-            'duration': 10,
+            'timeout': 10,
+            'volume': 50,
         }
         self.module._get_device = Mock(return_value=device)
         timer_mock = Mock()
@@ -436,8 +454,9 @@ class TestAlarmclock(unittest.TestCase):
         self.session.assert_event_called_with('alarmclock.alarm.stopped', {
             'hour': 12,
             'minute': 0,
-            'duration': 10,
+            'timeout': 10,
             'snoozed': False,
+            'volume': 50,
         })
         timer_mock.cancel.assert_called()
         self.assertEqual(len(self.module.stop_timers.keys()), 0)
@@ -463,8 +482,9 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 10,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': True, 'wed': True, 'thu': True, 'fri': True, 'sat': True, 'sun': True},
+            'volume': 50,
         })
         self.module.today_is_non_working_day = False
         self.module.tomorrow = {
@@ -477,7 +497,8 @@ class TestAlarmclock(unittest.TestCase):
         self.session.assert_event_called_with('alarmclock.alarm.scheduled', {
             'hour': 12,
             'minute': 10,
-            'duration': 10,
+            'timeout': 10,
+            'volume': 50,
         })
 
     @patch('backend.alarmclock.datetime')
@@ -493,7 +514,7 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 10,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': True, 'wed': True, 'thu': True, 'fri': True, 'sat': True, 'sun': True},
         })
         self.module.today_is_non_working_day = False
@@ -519,7 +540,7 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 10,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': True, 'wed': True, 'thu': True, 'fri': True, 'sat': True, 'sun': True},
         })
         self.module.today_is_non_working_day = True
@@ -545,8 +566,9 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 10,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': True, 'wed': True, 'thu': False, 'fri': True, 'sat': True, 'sun': True},
+            'volume': 50,
         })
         self.module.today_is_non_working_day = False
         self.module.tomorrow = {
@@ -559,7 +581,8 @@ class TestAlarmclock(unittest.TestCase):
         self.session.assert_event_called_with('alarmclock.alarm.scheduled', {
             'hour': 12,
             'minute': 10,
-            'duration': 10,
+            'timeout': 10,
+            'volume': 50,
         })
 
     @patch('backend.alarmclock.datetime')
@@ -575,7 +598,7 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 10,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': True, 'wed': True, 'thu': False, 'fri': True, 'sat': True, 'sun': True},
         })
         self.module.today_is_non_working_day = False
@@ -601,7 +624,7 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 10,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': True, 'wed': True, 'thu': False, 'fri': True, 'sat': True, 'sun': True},
         })
         self.module.today_is_non_working_day = False
@@ -627,7 +650,7 @@ class TestAlarmclock(unittest.TestCase):
                 'hour': 12,
                 'minute': 10,
             },
-            'duration': 10,
+            'timeout': 10,
             'days': {'mon': True, 'tue': True, 'wed': True, 'thu': False, 'fri': False, 'sat': True, 'sun': True},
         })
         self.module.tomorrow = {
@@ -653,7 +676,8 @@ class TestAlarmclockAlarmTriggeredEvent(unittest.TestCase):
         self.assertEqual(self.event.EVENT_PARAMS, [
             "hour",
             "minute",
-            "duration",
+            "timeout",
+            "volume",
         ])
 
 
@@ -671,7 +695,8 @@ class TestAlarmclockAlarmScheduledEvent(unittest.TestCase):
         self.assertEqual(self.event.EVENT_PARAMS, [
             "hour",
             "minute",
-            "duration",
+            "timeout",
+            "volume",
         ])
 
 
@@ -689,8 +714,9 @@ class TestAlarmclockAlarmStoppedEvent(unittest.TestCase):
         self.assertEqual(self.event.EVENT_PARAMS, [
             "hour",
             "minute",
-            "duration",
+            "timeout",
             "snoozed",
+            "volume",
         ])
 
 if __name__ == '__main__':

@@ -162,7 +162,7 @@ class Alarmclock(CleepModule):
                     "value": volume,
                     "type": int,
                     "validator": lambda v: v > 0 and v <= 100,
-                    "message": "Volume must be between 0 and 100",
+                    "message": "Volume must be between 1 and 100",
                 },
             ]
         )
