@@ -25,7 +25,8 @@ class AlarmScheduledToAlarmFormatter(ProfileFormatter):
         """
         profile.hour = event_params["hour"]
         profile.minute = event_params["minute"]
-        profile.duration = event_params["duration"]
+        profile.timeout = event_params["timeout"]
+        profile.volume = event_params["volume"]
         profile.status = profile.STATUS_SCHEDULED
 
         return profile

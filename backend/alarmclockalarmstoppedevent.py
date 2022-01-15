@@ -11,7 +11,7 @@ class AlarmclockAlarmStoppedEvent(Event):
 
     EVENT_NAME = "alarmclock.alarm.stopped"
     EVENT_PROPAGATE = True
-    EVENT_PARAMS = ["hour", "minute", "duration", "snoozed"]
+    EVENT_PARAMS = ["hour", "minute", "timeout", "snoozed", "volume"]
 
     def __init__(self, params):
         """

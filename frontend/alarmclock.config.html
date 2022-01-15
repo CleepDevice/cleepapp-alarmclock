@@ -6,7 +6,7 @@
         <md-list-item>
             <md-icon md-svg-icon="chevron-right"></md-icon>
             <p>Choose days</p>
-            <md-input-container md-no-float class="md-secondary no-margin" layout="row" layout-align="start center" layout-padding>
+            <md-input-container md-no-float class="md-secondary" style="margin-right: 30px;">
                 <md-checkbox ng-model="alarmclockCtl.days[0]" aria-label="Monday">Mon</md-checkbox>
                 <md-checkbox ng-model="alarmclockCtl.days[1]" aria-label="Tuesday">Tue</md-checkbox>
                 <md-checkbox ng-model="alarmclockCtl.days[2]" aria-label="Wednesday">Wed</md-checkbox>
@@ -15,13 +15,25 @@
                 <md-checkbox ng-model="alarmclockCtl.days[5]" aria-label="Saturday">Sat</md-checkbox>
                 <md-checkbox ng-model="alarmclockCtl.days[6]" aria-label="Sunday">Sun</md-checkbox>
             </md-input-container>
+            <md-button class="md-secondary md-raised md-primary" ng-click="alarmclockCtl.toggleAllDays()">
+                <md-icon md-svg-icon="checkbox-marked-outline"></md-icon>
+                <md-tooltip>Select/unselect all days</md-tooltip>
+            </md-button>
         </md-list-item>
 
         <md-list-item>
             <md-icon md-svg-icon="chevron-right"></md-icon>
-            <p>Alarm duration (in minutes)</p>
+            <p>Alarm timeout (in minutes)</p>
             <md-input-container md-no-float class="md-secondary no-margin">
-                <input ng-model="alarmclockCtl.duration" type="number" min="0" step="1" aria-label="Duration" style="width:50px;">
+                <input ng-model="alarmclockCtl.timeout" type="number" min="0" step="1" style="width:50px;">
+            </md-input-container>
+        </md-list-item>
+
+        <md-list-item>
+            <md-icon md-svg-icon="chevron-right"></md-icon>
+            <p>Alarm volume</p>
+            <md-input-container md-no-float class="md-secondary no-margin">
+                <md-slider flex min="0" max="100" step="5" class="md-primary" md-discrete ng-model="alarmclockCtl.volume">
             </md-input-container>
         </md-list-item>
 
@@ -62,22 +74,30 @@
             <md-icon ng-if="alarm.enabled" md-svg-icon="alarm-note"></md-icon>
             <md-icon ng-if="!alarm.enabled" md-svg-icon="alarm-note-off"></md-icon>
             <div class="md-list-item-text">
-                <h3>{{ alarm.time.hour | padzero }}:{{ alarm.time.minute | padzero }}</h3>
-                <p>Enabled {{ alarm.days | hrDays }} - {{ alarm.nonWorkingDays ? 'enabled on non-working-days' : 'disabled on non-working-days' }}</p>
+                <h3>
+                    {{ alarm.time.hour | padzero }}:{{ alarm.time.minute | padzero }}
+                </h3>
+                <p>
+                    Enabled {{ alarm.days | hrDays }} -
+                    {{ alarm.nonWorkingDays ? 'Enabled on non-working-days' : 'Disabled on non-working-days' }} -
+                    Timeout {{ alarm.timeout }} mins -
+                    Volume at {{ alarm.volume }}%
+                </p> 
             </div>
-            <md-input-container class="md-secondary">
-                <md-button ng-click="alarmclockCtl.toggleAlarm(alarm.uuid)" class="md-raised md-primary" aria-label="Toggle">
-                    <md-icon ng-if="alarm.enabled" md-svg-icon="alarm-note-off"></md-icon>
-                    <md-icon ng-if="!alarm.enabled" md-svg-icon="alarm-note"></md-icon>
-                    <span ng-if="alarm.enabled">Disable</span>
-                    <span ng-if="!alarm.enabled">Enable</span>
-                </md-button>
-            <md-input-container>
-            <md-input-container class="md-secondary">
-                <md-button ng-click="alarmclockCtl.removeAlarm(alarm.uuid)" class="md-raised md-accent" aria-label="Delete">
-                    <md-icon md-svg-icon="delete"></md-icon>
-                </md-button>
-            <md-input-container>
+            <md-button ng-click="alarmclockCtl.duplicateAlarm(alarm)" class="md-raised md-primary md-secondary">
+                <md-icon md-svg-icon="content-duplicate"></md-icon>
+                <md-tooltip>Copy alarm</md-tooltip>
+            </md-button>
+            <md-button ng-click="alarmclockCtl.toggleAlarm(alarm.uuid)" class="md-raised md-primary md-secondary">
+                <md-icon ng-if="alarm.enabled" md-svg-icon="alarm-note-off"></md-icon>
+                <md-icon ng-if="!alarm.enabled" md-svg-icon="alarm-note"></md-icon>
+                <span ng-if="alarm.enabled">Disable</span>
+                <span ng-if="!alarm.enabled">Enable</span>
+            </md-button>
+            <md-button ng-click="alarmclockCtl.removeAlarm(alarm.uuid)" class="md-raised md-primary md-secondary">
+                <md-icon md-svg-icon="delete"></md-icon>
+                <md-tooltip>Delete alarm</md-tooltip>
+            </md-button>
         </md-list-item>
         <md-list-item ng-if="!alarmclockCtl.devices.length">
             <md-icon md-svg-icon="chevron-right"></md-icon>

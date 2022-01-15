@@ -91,9 +91,11 @@ class Alarmclock(CleepModule):
                 self._set_today_is_non_working_day()
                 self._set_tomorrow_is_non_working_day()
 
-            self._trigger_alarm(event["params"], self.WEEKDAYS_MAPPING[event["params"]["weekday"]])
+            self._trigger_alarm(
+                event["params"], self.WEEKDAYS_MAPPING[event["params"]["weekday"]]
+            )
 
-    def add_alarm(self, alarm_time, duration, days, non_working_days):
+    def add_alarm(self, alarm_time, timeout, days, non_working_days, volume):
         """
         Add new alarm
 
@@ -105,7 +107,7 @@ class Alarmclock(CleepModule):
                     minute (int): alarm minute
                 }
 
-            duration (int): alarm duration (in minutes)
+            timeout (int): alarm timeout (in minutes)
             days (dict): list of days to triger alarm::
 
                 {
@@ -119,6 +121,7 @@ class Alarmclock(CleepModule):
                 }
 
             non_working_days (bool): True to enable alarm on non working days
+            volume (int): volume percentage
 
         Returns:
             string: created alarm identifier
@@ -134,9 +137,8 @@ class Alarmclock(CleepModule):
                     "name": "alarm_time",
                     "type": dict,
                     "value": alarm_time,
-                    "validator": lambda v: len(v)>0 and all(
-                        key in ["hour", "minute"] for key in v.keys()
-                    )
+                    "validator": lambda v: len(v) > 0
+                    and all(key in ["hour", "minute"] for key in v.keys())
                     and isinstance(v["hour"], int)
                     and isinstance(v["minute"], int),
                 },
@@ -145,15 +147,22 @@ class Alarmclock(CleepModule):
                     "type": dict,
                     "value": days,
                     "validator": Alarmclock._check_days_validator,
-                    "message": "Parameter \"days\" is invalid or no day is selected",
+                    "message": 'Parameter "days" is invalid or no day is selected',
                 },
                 {"name": "non_working_days", "type": bool, "value": non_working_days},
                 {
-                    "name": "duration",
+                    "name": "timeout",
                     "type": int,
-                    "value": duration,
+                    "value": timeout,
                     "validator": lambda v: v >= 0,
-                    "message": "Duration must be greater or equal to 0",
+                    "message": "Timeout must be greater or equal to 0",
+                },
+                {
+                    "name": "volume",
+                    "value": volume,
+                    "type": int,
+                    "validator": lambda v: v > 0 and v <= 100,
+                    "message": "Volume must be between 0 and 100",
                 },
             ]
         )
@@ -165,11 +174,14 @@ class Alarmclock(CleepModule):
             "days": days,
             "nonWorkingDays": non_working_days,
             "enabled": True,
-            "duration": duration,
+            "timeout": timeout,
+            "volume": volume,
         }
         created_alarm = self._add_device(alarm)
         if not created_alarm:
             raise CommandError("Error adding alarm")
+
+        self._schedule_alarm()
 
         return created_alarm["uuid"]
 
@@ -193,7 +205,7 @@ class Alarmclock(CleepModule):
                     "type": str,
                     "value": alarm_uuid,
                     "validator": lambda v: self._get_device(v) is not None,
-                    "message": "Alarm does not exist"
+                    "message": "Alarm does not exist",
                 }
             ]
         )
@@ -218,7 +230,7 @@ class Alarmclock(CleepModule):
                     "type": str,
                     "value": alarm_uuid,
                     "validator": lambda v: self._get_device(v) is not None,
-                    "message": "Alarm does not exist"
+                    "message": "Alarm does not exist",
                 }
             ]
         )
@@ -294,28 +306,36 @@ class Alarmclock(CleepModule):
         alarms = self.get_module_devices()
         for alarm_uuid, alarm in alarms.items():
             if not alarm["nonWorkingDays"] and self.today_is_non_working_day:
+                self.logger.debug('Alarm %s: dropped because non working days', alarm_uuid)
                 continue
             if not alarm["enabled"]:
+                self.logger.debug('Alarm %s: dropped because disabled', alarm_uuid)
                 continue
             if not alarm["days"][weekday]:
+                self.logger.debug('Alarm %s: dropped because disabled for this weekday', alarm_uuid)
                 continue
             if (
                 alarm["time"]["hour"] != current_time["hour"]
                 or alarm["time"]["minute"] != current_time["minute"]
             ):
+                self.logger.debug('Alarm %s: dropped because no alarm time', alarm_uuid)
                 continue
 
             self.alarm_triggered_event.send(
                 params={
                     "hour": alarm["time"]["hour"],
                     "minute": alarm["time"]["minute"],
-                    "duration": alarm["duration"],
+                    "timeout": alarm["timeout"],
+                    "volume": alarm["volume"],
                 },
                 device_id=alarm_uuid,
             )
             self._schedule_alarm()
 
-            self.stop_timers[alarm_uuid] = Timer(alarm["duration"] * 60, self._stop_alarm, alarm_uuid)
+            self.stop_timers[alarm_uuid] = Timer(
+                alarm["timeout"] * 60, self._stop_alarm, [alarm_uuid]
+            )
+            self.logger.info("Trigger alarm %s", alarm_uuid)
             self.stop_timers[alarm_uuid].start()
 
     def _stop_alarm(self, alarm_uuid, snoozed=False):
@@ -325,6 +345,7 @@ class Alarmclock(CleepModule):
         Args:
             alarm_uuid (string): alarm identifier
         """
+        self.logger.info("Alarm %s stopped", alarm_uuid)
         if self.stop_timers.get(alarm_uuid):
             self.stop_timers[alarm_uuid].cancel()
             del self.stop_timers[alarm_uuid]
@@ -340,7 +361,8 @@ class Alarmclock(CleepModule):
             params={
                 "hour": alarm["time"]["hour"],
                 "minute": alarm["time"]["minute"],
-                "duration": alarm["duration"],
+                "timeout": alarm["timeout"],
+                "volume": alarm["volume"],
                 "snoozed": snoozed,
             },
             device_id=alarm_uuid,
@@ -373,7 +395,8 @@ class Alarmclock(CleepModule):
                     params={
                         "hour": alarm["time"]["hour"],
                         "minute": alarm["time"]["minute"],
-                        "duration": alarm["duration"],
+                        "timeout": alarm["timeout"],
+                        "volume": alarm["volume"],
                     },
                     device_id=alarm_uuid,
                 )
@@ -391,7 +414,8 @@ class Alarmclock(CleepModule):
                     params={
                         "hour": alarm["time"]["hour"],
                         "minute": alarm["time"]["minute"],
-                        "duration": alarm["duration"],
+                        "timeout": alarm["timeout"],
+                        "volume": alarm["volume"],
                     },
                     device_id=alarm_uuid,
                 )

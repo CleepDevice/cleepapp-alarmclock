@@ -12,19 +12,16 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
         var self = this;
         self.config = {};
         self.devices = [];
+        self.daysMapping = {0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'};
         // monday is 0 (first item), sunday is 6
         self.days = [false, false, false, false, false, false, false];
         self.nonWorkingDays = false;
         self.hour = 8;
         self.minute = 0;
-        self.duration = 15;
-        self.tabIndex = 'alarms';
+        self.timeout = 15;
+        self.volume = 50;
 
         self.$onInit = function() {
-            if( $location.search().tab ) {
-                self.tabIndex = $location.search().tab;
-            }
-
             cleepService.getModuleConfig('alarmclock');
             cleepService.reloadDevices();
         };
@@ -39,11 +36,21 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
                 sat: self.days[5],
                 sun: self.days[6],
             };
-            alarmclockService.addAlarm(self.hour, self.minute, self.duration, days, self.nonWorkingDays)
+            alarmclockService.addAlarm(self.hour, self.minute, self.timeout, days, self.nonWorkingDays, self.volume)
                 .then(resp => {
                     toastService.success('Alarm added');
                     cleepService.reloadDevices();
+                    self.clearForm();
                 });
+        };
+
+        self.clearForm = function() {
+            self.days.forEach((day, index) => self.days[index] = false);
+            self.nonWorkingDays = false;
+            self.hour = 8;
+            self.minute = 0;
+            self.timeout = 15;
+            self.volume = 50;
         };
 
         self.removeAlarm = function(alarmUuid) {
@@ -54,6 +61,15 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
                 });
         };
 
+        self.duplicateAlarm = function(alarm) {
+            self.days.forEach((day, index) => self.days[index] = alarm.days[self.daysMapping[index]]);
+            self.nonWorkingDays = alarm.nonWorkingDays;
+            self.hour = alarm.time.hour;
+            self.minute = alarm.time.minute;
+            self.timeout = alarm.timeout;
+            self.volume = alarm.volume;
+        };
+
         self.toggleAlarm = function(alarmUuid) {
             alarmclockService.toggleAlarm(alarmUuid)
                 .then(resp => {
@@ -61,6 +77,10 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
                     toastService.success(message);
                     cleepService.reloadDevices();
                 });
+        };
+
+        self.toggleAllDays = function() {
+            self.days.forEach((day, index) => self.days[index] = !self.days[index]);
         };
 
         $rootScope.$watch(function() {
