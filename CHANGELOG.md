@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [1.0.0] - 2021-12-18
+## [1.0.0] - 2022-01-15
 
 ### Added
 - First release
