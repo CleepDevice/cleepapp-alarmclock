@@ -324,19 +324,23 @@ class Alarmclock(CleepModule):
         alarms = self.get_module_devices()
         for alarm_uuid, alarm in alarms.items():
             if not alarm["nonWorkingDays"] and self.today_is_non_working_day:
-                self.logger.debug('Alarm %s: dropped because non working days', alarm_uuid)
+                self.logger.debug(
+                    "Alarm %s: dropped because non working days", alarm_uuid
+                )
                 continue
             if not alarm["enabled"]:
-                self.logger.debug('Alarm %s: dropped because disabled', alarm_uuid)
+                self.logger.debug("Alarm %s: dropped because disabled", alarm_uuid)
                 continue
             if not alarm["days"][weekday]:
-                self.logger.debug('Alarm %s: dropped because disabled for this weekday', alarm_uuid)
+                self.logger.debug(
+                    "Alarm %s: dropped because disabled for this weekday", alarm_uuid
+                )
                 continue
             if (
                 alarm["time"]["hour"] != current_time["hour"]
                 or alarm["time"]["minute"] != current_time["minute"]
             ):
-                self.logger.debug('Alarm %s: dropped because no alarm time', alarm_uuid)
+                self.logger.debug("Alarm %s: dropped because no alarm time", alarm_uuid)
                 continue
 
             self.alarm_triggered_event.send(
