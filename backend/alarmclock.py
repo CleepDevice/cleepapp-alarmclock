@@ -47,7 +47,7 @@ class Alarmclock(CleepModule):
 
         Args:
             bootstrap (dict): bootstrap objects
-            debug_enabled: debug status
+            debug_enabled (bool): debug status
         """
         CleepModule.__init__(self, bootstrap, debug_enabled)
 
@@ -59,9 +59,11 @@ class Alarmclock(CleepModule):
         self.has_audioplayer = False
         self.audioplayer_uuid = None
         self.stop_timers = {}
+        self.__scheduled_alarm_uuids = set()
 
         self.alarm_triggered_event = self._get_event("alarmclock.alarm.triggered")
         self.alarm_scheduled_event = self._get_event("alarmclock.alarm.scheduled")
+        self.alarm_unscheduled_event = self._get_event("alarmclock.alarm.unscheduled")
         self.alarm_stopped_event = self._get_event("alarmclock.alarm.stopped")
 
     def _on_start(self):
@@ -235,8 +237,8 @@ class Alarmclock(CleepModule):
             ]
         )
 
-        device = self._get_device(alarm_uuid)
-        enabled = not device["enabled"]
+        alarm = self._get_device(alarm_uuid)
+        enabled = not alarm["enabled"]
         updated = self._update_device(
             alarm_uuid,
             {
@@ -245,6 +247,22 @@ class Alarmclock(CleepModule):
         )
         if not updated:
             raise CommandError("Error updating alarm")
+
+        if enabled:
+            self.__scheduled_alarm_uuids.add(alarm_uuid)
+        else:
+            self.__scheduled_alarm_uuids.remove(alarm_uuid)
+        event = self.alarm_scheduled_event if enabled else self.alarm_unscheduled_event
+        event.send(
+            params={
+                "hour": alarm["time"]["hour"],
+                "minute": alarm["time"]["minute"],
+                "timeout": alarm["timeout"],
+                "volume": alarm["volume"],
+                "count": len(self.__scheduled_alarm_uuids),
+            },
+            device_id=alarm_uuid,
+        )
 
         return enabled
 
@@ -344,6 +362,7 @@ class Alarmclock(CleepModule):
 
         Args:
             alarm_uuid (string): alarm identifier
+            snoozed (bool): True if alarm was snoozed
         """
         self.logger.info("Alarm %s stopped", alarm_uuid)
         if self.stop_timers.get(alarm_uuid):
@@ -391,12 +410,14 @@ class Alarmclock(CleepModule):
                 and alarm["time"]["hour"] >= now.hour
                 and alarm["time"]["minute"] > now.minute
             ):
+                self.__scheduled_alarm_uuids.add(alarm_uuid)
                 self.alarm_scheduled_event.send(
                     params={
                         "hour": alarm["time"]["hour"],
                         "minute": alarm["time"]["minute"],
                         "timeout": alarm["timeout"],
                         "volume": alarm["volume"],
+                        "count": len(self.__scheduled_alarm_uuids),
                     },
                     device_id=alarm_uuid,
                 )
@@ -410,12 +431,14 @@ class Alarmclock(CleepModule):
                 continue
 
             if alarm["days"][tomorrow_weekday_literal]:
+                self.__scheduled_alarm_uuids.add(alarm_uuid)
                 self.alarm_scheduled_event.send(
                     params={
                         "hour": alarm["time"]["hour"],
                         "minute": alarm["time"]["minute"],
                         "timeout": alarm["timeout"],
                         "volume": alarm["volume"],
+                        "count": len(self.__scheduled_alarm_uuids),
                     },
                     device_id=alarm_uuid,
                 )

@@ -4,9 +4,9 @@
 from cleep.libs.internals.profileformatter import ProfileFormatter
 from cleep.profiles.alarmprofile import AlarmProfile
 
-class AlarmScheduledToAlarmFormatter(ProfileFormatter):
+class AlarmUnscheduledToAlarmFormatter(ProfileFormatter):
     """
-    AlarmScheduledEvent event to AlarmProfile
+    AlarmUnscheduledEvent event to AlarmProfile
     """
     def __init__(self, params):
         """
@@ -15,7 +15,7 @@ class AlarmScheduledToAlarmFormatter(ProfileFormatter):
         Args:
             params (dict): formatter parameters
         """
-        ProfileFormatter.__init__(self, params, 'alarmclock.alarm.scheduled', AlarmProfile())
+        ProfileFormatter.__init__(self, params, 'alarmclock.alarm.unscheduled', AlarmProfile())
 
     def _fill_profile(self, event_params, profile):
         """
@@ -30,6 +30,6 @@ class AlarmScheduledToAlarmFormatter(ProfileFormatter):
         profile.timeout = event_params["timeout"]
         profile.volume = event_params["volume"]
         profile.count = event_params["count"]
-        profile.status = profile.STATUS_SCHEDULED
+        profile.status = profile.STATUS_UNSCHEDULED
 
         return profile

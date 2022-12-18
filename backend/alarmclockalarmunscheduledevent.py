@@ -4,12 +4,12 @@
 from cleep.libs.internals.event import Event
 
 
-class AlarmclockAlarmScheduledEvent(Event):
+class AlarmclockAlarmUnscheduledEvent(Event):
     """
-    Alarmclock.alarm.scheduled event
+    Alarmclock.alarm.unscheduled event
     """
 
-    EVENT_NAME = "alarmclock.alarm.scheduled"
+    EVENT_NAME = "alarmclock.alarm.unscheduled"
     EVENT_PROPAGATE = True
     EVENT_PARAMS = ["hour", "minute", "timeout", "volume", "count"]
 
