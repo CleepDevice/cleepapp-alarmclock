@@ -8,6 +8,7 @@ sys.path.append('../')
 from backend.alarmclock import Alarmclock
 from backend.alarmclockalarmtriggeredevent import AlarmclockAlarmTriggeredEvent
 from backend.alarmclockalarmscheduledevent import AlarmclockAlarmScheduledEvent
+from backend.alarmclockalarmunscheduledevent import AlarmclockAlarmUnscheduledEvent
 from backend.alarmclockalarmstoppedevent import AlarmclockAlarmStoppedEvent
 from cleep.exception import InvalidParameter, MissingParameter, CommandError, Unauthorized
 from cleep.libs.tests import session
@@ -212,27 +213,47 @@ class TestAlarmclock(unittest.TestCase):
 
     def test_toggle_alarm_disable(self):
         self.init()
-        self.module._get_device = Mock(return_value={'enabled': True})
+        self.module._Alarmclock__scheduled_alarm_uuids = set(('123456789',))
+        alarm = { 'time': {'hour': 1, 'minute': 1}, 'timeout': 10, 'enabled': True, 'volume': 50 }
+        self.module._get_device = Mock(return_value=alarm)
         self.module._update_device = Mock(return_value=True)
 
         enabled = self.module.toggle_alarm('123456789')
 
         self.assertFalse(enabled)
         self.module._update_device.assert_called_with('123456789', {'enabled': False})
+        self.session.assert_event_called_with('alarmclock.alarm.unscheduled', {
+            'hour': 1,
+            'minute': 1,
+            'timeout': 10,
+            'volume': 50,
+            'count': 0,
+        })
+        self.assertFalse(self.session.event_called('alarmclock.alarm.scheduled'))
 
     def test_toggle_alarm_enable(self):
         self.init()
-        self.module._get_device = Mock(return_value={'enabled': False})
+        alarm = { 'time': {'hour': 1, 'minute': 1}, 'timeout': 10, 'enabled': False, 'volume': 50 }
+        self.module._get_device = Mock(return_value=alarm)
         self.module._update_device = Mock(return_value=True)
 
         enabled = self.module.toggle_alarm('123456789')
 
         self.assertTrue(enabled)
         self.module._update_device.assert_called_with('123456789', {'enabled': True})
+        self.session.assert_event_called_with('alarmclock.alarm.scheduled', {
+            'hour': 1,
+            'minute': 1,
+            'timeout': 10,
+            'volume': 50,
+            'count': 1,
+        })
+        self.assertFalse(self.session.event_called('alarmclock.alarm.unscheduled'))
 
     def test_toggle_alarm_failed(self):
         self.init()
-        self.module._get_device = Mock(return_value={'enabled': True})
+        alarm = { 'time': {'hour': 1, 'minute': 1}, 'timeout': 10, 'enabled': True, 'volume': 10 }
+        self.module._get_device = Mock(return_value=alarm)
         self.module._update_device = Mock(return_value=False)
 
         with self.assertRaises(CommandError) as cm:
@@ -499,7 +520,9 @@ class TestAlarmclock(unittest.TestCase):
             'minute': 10,
             'timeout': 10,
             'volume': 50,
+            'count': 1,
         })
+        self.assertEqual(self.session.event_call_count('alarmclock.alarm.scheduled'), 1)
 
     @patch('backend.alarmclock.datetime')
     def test__schedule_alarm_for_today_but_disabled(self, datetime_mock):
@@ -583,7 +606,9 @@ class TestAlarmclock(unittest.TestCase):
             'minute': 10,
             'timeout': 10,
             'volume': 50,
+            'count': 1,
         })
+        self.assertEqual(self.session.event_call_count('alarmclock.alarm.scheduled'), 1)
 
     @patch('backend.alarmclock.datetime')
     def test__schedule_alarm_for_tomorrow_but_disabled(self, datetime_mock):
@@ -636,6 +661,45 @@ class TestAlarmclock(unittest.TestCase):
         self.module._schedule_alarm()
 
         self.assertEqual(self.session.event_call_count('alarmclock.alarm.scheduled'), 0)
+
+    @patch('backend.alarmclock.datetime')
+    def test__schedule_alarm_alarms_for_today_and_tomorrow(self, datetime_mock):
+        datetime_mock.now.return_value = datetime.datetime(2021, 12, 16, 12, 0)
+        self.init()
+        self.module._add_device({
+            'type': 'alarmclock',
+            'name': 'Alarm',
+            'enabled': True,
+            'nonWorkingDays': True,
+            'time': {
+                'hour': 14,
+                'minute': 10,
+            },
+            'timeout': 10,
+            'volume': 50,
+            'days': {'mon': True, 'tue': True, 'wed': True, 'thu': True, 'fri': True, 'sat': True, 'sun': True},
+        })
+        self.module._add_device({
+            'type': 'alarmclock',
+            'name': 'Alarm',
+            'enabled': True,
+            'nonWorkingDays': True,
+            'time': {
+                'hour': 10,
+                'minute': 10,
+            },
+            'timeout': 10,
+            'volume': 50,
+            'days': {'mon': True, 'tue': True, 'wed': True, 'thu': True, 'fri': True, 'sat': True, 'sun': True},
+        })
+        self.module.tomorrow = {
+            'date': datetime.date(2021, 12, 17),
+            'is_non_working_day': False
+        }
+
+        self.module._schedule_alarm()
+
+        self.assertEqual(self.session.event_call_count('alarmclock.alarm.scheduled'), 2)
 
     @patch('backend.alarmclock.datetime')
     def test__schedule_alarm_no_alarm_for_today_and_tomorrow(self, datetime_mock):
@@ -697,6 +761,27 @@ class TestAlarmclockAlarmScheduledEvent(unittest.TestCase):
             "minute",
             "timeout",
             "volume",
+            "count",
+        ])
+
+
+
+
+
+class TestAlarmclockAlarmUnscheduledEvent(unittest.TestCase):
+
+    def setUp(self):
+        logging.basicConfig(level=logging.FATAL, format='%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s')
+        self.session = session.TestSession(self)
+        self.event = self.session.setup_event(AlarmclockAlarmUnscheduledEvent)
+
+    def test_event_params(self):
+        self.assertEqual(self.event.EVENT_PARAMS, [
+            "hour",
+            "minute",
+            "timeout",
+            "volume",
+            "count",
         ])
 
 

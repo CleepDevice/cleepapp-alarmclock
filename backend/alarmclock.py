@@ -413,6 +413,7 @@ class Alarmclock(CleepModule):
                 alarm["days"][today_weekday_literal]
                 and alarm["time"]["hour"] >= now.hour
                 and alarm["time"]["minute"] > now.minute
+                and alarm_uuid not in self.__scheduled_alarm_uuids
             ):
                 self.__scheduled_alarm_uuids.add(alarm_uuid)
                 self.alarm_scheduled_event.send(
@@ -425,7 +426,6 @@ class Alarmclock(CleepModule):
                     },
                     device_id=alarm_uuid,
                 )
-                return
 
         # check next alarm for tomorrow
         for alarm_uuid, alarm in alarms.items():
@@ -434,7 +434,10 @@ class Alarmclock(CleepModule):
             if not alarm["enabled"]:
                 continue
 
-            if alarm["days"][tomorrow_weekday_literal]:
+            if (
+                alarm["days"][tomorrow_weekday_literal]
+                and alarm_uuid not in self.__scheduled_alarm_uuids
+            ):
                 self.__scheduled_alarm_uuids.add(alarm_uuid)
                 self.alarm_scheduled_event.send(
                     params={
@@ -446,4 +449,3 @@ class Alarmclock(CleepModule):
                     },
                     device_id=alarm_uuid,
                 )
-                return
