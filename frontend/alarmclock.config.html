@@ -6,14 +6,10 @@
         <md-list-item>
             <md-icon md-svg-icon="chevron-right"></md-icon>
             <p>Choose days</p>
-            <md-input-container md-no-float class="md-secondary" style="margin-right: 30px;">
-                <md-checkbox ng-model="alarmclockCtl.days[0]" aria-label="Monday">Mon</md-checkbox>
-                <md-checkbox ng-model="alarmclockCtl.days[1]" aria-label="Tuesday">Tue</md-checkbox>
-                <md-checkbox ng-model="alarmclockCtl.days[2]" aria-label="Wednesday">Wed</md-checkbox>
-                <md-checkbox ng-model="alarmclockCtl.days[3]" aria-label="Thursday">Thu</md-checkbox>
-                <md-checkbox ng-model="alarmclockCtl.days[4]" aria-label="Friday">Fri</md-checkbox>
-                <md-checkbox ng-model="alarmclockCtl.days[5]" aria-label="Saturday">Sat</md-checkbox>
-                <md-checkbox ng-model="alarmclockCtl.days[6]" aria-label="Sunday">Sun</md-checkbox>
+            <md-input-container md-no-float class="md-secondary">
+                <md-select ng-model="alarmclockCtl.selectedDays" multiple>
+                    <md-option ng-repeat="day in alarmclockCtl.days" ng-value="day.val">{{day.label}}</md-option>
+                </md-select>
             </md-input-container>
             <md-button class="md-secondary md-raised md-primary" ng-click="alarmclockCtl.toggleAllDays()">
                 <md-icon md-svg-icon="checkbox-marked-outline"></md-icon>
@@ -84,6 +80,10 @@
                     Volume at {{ alarm.volume }}%
                 </p> 
             </div>
+            <md-button ng-click="alarmclockCtl.editAlarm(alarm)" class="md-raised md-primary md-secondary">
+                <md-icon md-svg-icon="pencil"></md-icon>
+                <md-tooltip>Edit alarm</md-tooltip>
+            </md-button>
             <md-button ng-click="alarmclockCtl.duplicateAlarm(alarm)" class="md-raised md-primary md-secondary">
                 <md-icon md-svg-icon="content-duplicate"></md-icon>
                 <md-tooltip>Copy alarm</md-tooltip>

@@ -12,14 +12,21 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
         var self = this;
         self.config = {};
         self.devices = [];
-        self.daysMapping = {0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'};
-        // monday is 0 (first item), sunday is 6
-        self.days = [false, false, false, false, false, false, false];
         self.nonWorkingDays = false;
         self.hour = 8;
         self.minute = 0;
         self.timeout = 15;
         self.volume = 50;
+        self.days = [
+            { label: 'Monday', val: 'mon' },
+            { label: 'Tuesday', val: 'tue' },
+            { label: 'Wednesday', val: 'wed' },
+            { label: 'Thursday', val: 'thu' },
+            { label: 'Friday', val: 'fri' },
+            { label: 'Saturday', val: 'sat' },
+            { label: 'Sunday', val: 'sun' },
+        ];
+        self.selectedDays = [];
 
         self.$onInit = function() {
             cleepService.getModuleConfig('alarmclock');
@@ -28,13 +35,13 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
 
         self.addAlarm = function() {
             var days = {
-                mon: self.days[0],
-                tue: self.days[1],
-                wed: self.days[2],
-                thu: self.days[3],
-                fri: self.days[4],
-                sat: self.days[5],
-                sun: self.days[6],
+                mon: self.selectedDays.indexOf('mon') !== -1,
+                tue: self.selectedDays.indexOf('tue') !== -1,
+                wed: self.selectedDays.indexOf('wed') !== -1,
+                thu: self.selectedDays.indexOf('thu') !== -1,
+                fri: self.selectedDays.indexOf('fri') !== -1,
+                sat: self.selectedDays.indexOf('sat') !== -1,
+                sun: self.selectedDays.indexOf('sun') !== -1,
             };
             alarmclockService.addAlarm(self.hour, self.minute, self.timeout, days, self.nonWorkingDays, self.volume)
                 .then(resp => {
@@ -45,7 +52,7 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
         };
 
         self.clearForm = function() {
-            self.days.forEach((day, index) => self.days[index] = false);
+            while (self.selectedDays.length > 0) self.selectedDays.pop();
             self.nonWorkingDays = false;
             self.hour = 8;
             self.minute = 0;
@@ -53,16 +60,28 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
             self.volume = 50;
         };
 
-        self.removeAlarm = function(alarmUuid) {
+        self.removeAlarm = function(alarmUuid, showToast) {
             alarmclockService.removeAlarm(alarmUuid)
                 .then(resp => {
-                    toastService.success('Alarm deleted');
+                    if (showToast === undefined || showToast === true) {
+                        toastService.success('Alarm deleted');
+                    }
                     cleepService.reloadDevices();
                 });
         };
 
+        self.editAlarm = function(alarm) {
+            self.duplicateAlarm(alarm);
+            self.removeAlarm(alarm.uuid, false);
+        };
+
         self.duplicateAlarm = function(alarm) {
-            self.days.forEach((day, index) => self.days[index] = alarm.days[self.daysMapping[index]]);
+            while (self.selectedDays.length > 0) self.selectedDays.pop();
+            for (const [day, enabled] of Object.entries(alarm.days)) {
+                if (enabled) {
+                    self.selectedDays.push(day);
+                }
+            }
             self.nonWorkingDays = alarm.nonWorkingDays;
             self.hour = alarm.time.hour;
             self.minute = alarm.time.minute;
@@ -80,7 +99,11 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
         };
 
         self.toggleAllDays = function() {
-            self.days.forEach((day, index) => self.days[index] = !self.days[index]);
+            if (self.selectedDays.length) {
+                while (self.selectedDays.length > 0) self.selectedDays.pop();
+            } else {
+                self.days.forEach(day => self.selectedDays.push(day.val));
+            }
         };
 
         $rootScope.$watch(function() {
