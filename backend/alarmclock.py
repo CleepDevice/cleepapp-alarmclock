@@ -212,8 +212,23 @@ class Alarmclock(CleepModule):
             ]
         )
 
+        alarm = self._get_device(alarm_uuid)
+
         if not self._delete_device(alarm_uuid):
             raise CommandError("Error removing alarm")
+
+        if alarm_uuid in self.__scheduled_alarm_uuids:
+            self.__scheduled_alarm_uuids.remove(alarm_uuid)
+            self.alarm_unscheduled_event.send(
+                params={
+                    "hour": alarm["time"]["hour"],
+                    "minute": alarm["time"]["minute"],
+                    "timeout": alarm["timeout"],
+                    "volume": alarm["volume"],
+                    "count": len(self.__scheduled_alarm_uuids),
+                },
+                device_id=alarm_uuid,
+            )
 
     def toggle_alarm(self, alarm_uuid):
         """

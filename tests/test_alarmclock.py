@@ -14,7 +14,7 @@ from cleep.exception import InvalidParameter, MissingParameter, CommandError, Un
 from cleep.libs.tests import session
 from mock import Mock, patch, MagicMock
 
-class TestAlarmclock(unittest.TestCase):
+class TestsAlarmclock(unittest.TestCase):
 
     def setUp(self):
         logging.basicConfig(level=logging.FATAL, format=u'%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s')
@@ -189,10 +189,21 @@ class TestAlarmclock(unittest.TestCase):
         self.init()
         self.module._get_device = Mock(return_value={})
         self.module._delete_device = Mock(return_value=True)
+        alarm = { 'time': {'hour': 1, 'minute': 1}, 'timeout': 10, 'enabled': True, 'volume': 50 }
+        self.module._get_device = Mock(return_value=alarm)
+        self.module._Alarmclock__scheduled_alarm_uuids = set(('123456789',))
 
         self.module.remove_alarm('123456789')
 
         self.module._delete_device.assert_called_with('123456789')
+        self.assertEqual(len(self.module._Alarmclock__scheduled_alarm_uuids), 0)
+        self.session.assert_event_called_with('alarmclock.alarm.unscheduled', {
+            'hour': 1,
+            'minute': 1,
+            'timeout': 10,
+            'volume': 50,
+            'count': 0,
+        })
 
     def test_remove_alarm_failed(self):
         self.init()
