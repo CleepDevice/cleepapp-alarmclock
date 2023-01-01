@@ -32,9 +32,9 @@ class AlarmStoppedToAlarmFormatter(ProfileFormatter):
         profile.timeout = event_params["timeout"]
         profile.volume = event_params["volume"]
         profile.status = (
-            profile.STATUS_STOPPED
+            profile.STATUS_SNOOZED
             if event_params["snoozed"]
-            else profile.STATUS_SNOOZED
+            else profile.STATUS_STOPPED
         )
 
         return profile
