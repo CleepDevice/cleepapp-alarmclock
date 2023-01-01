@@ -97,7 +97,7 @@ class Alarmclock(CleepModule):
                 event["params"], self.WEEKDAYS_MAPPING[event["params"]["weekday"]]
             )
 
-    def add_alarm(self, alarm_time, timeout, days, non_working_days, volume):
+    def add_alarm(self, alarm_time, timeout, days, non_working_days, volume, repeat, shuffle):
         """
         Add new alarm
 
@@ -124,6 +124,8 @@ class Alarmclock(CleepModule):
 
             non_working_days (bool): True to enable alarm on non working days
             volume (int): volume percentage
+            repeat (bool): repeat playlist while it ends
+            shuffle (bool): shuffle playlist when it restarts
 
         Returns:
             string: created alarm identifier
@@ -166,6 +168,8 @@ class Alarmclock(CleepModule):
                     "validator": lambda v: v > 0 and v <= 100,
                     "message": "Volume must be between 1 and 100",
                 },
+                {"name": "repeat", "value": repeat, "type": bool},
+                {"name": "shuffle", "value": shuffle, "type": bool},
             ]
         )
 
@@ -178,6 +182,8 @@ class Alarmclock(CleepModule):
             "enabled": True,
             "timeout": timeout,
             "volume": volume,
+            "repeat": repeat,
+            "shuffle": shuffle,
         }
         created_alarm = self._add_device(alarm)
         if not created_alarm:
@@ -225,6 +231,8 @@ class Alarmclock(CleepModule):
                     "minute": alarm["time"]["minute"],
                     "timeout": alarm["timeout"],
                     "volume": alarm["volume"],
+                    "repeat": alarm["repeat"],
+                    "shuffle": alarm["shuffle"],
                     "count": len(self.__scheduled_alarm_uuids),
                 },
                 device_id=alarm_uuid,
@@ -265,7 +273,7 @@ class Alarmclock(CleepModule):
 
         if enabled:
             self.__scheduled_alarm_uuids.add(alarm_uuid)
-        else:
+        elif alarm_uuid in self.__scheduled_alarm_uuids:
             self.__scheduled_alarm_uuids.remove(alarm_uuid)
         event = self.alarm_scheduled_event if enabled else self.alarm_unscheduled_event
         event.send(
@@ -274,6 +282,8 @@ class Alarmclock(CleepModule):
                 "minute": alarm["time"]["minute"],
                 "timeout": alarm["timeout"],
                 "volume": alarm["volume"],
+                "repeat": alarm["repeat"],
+                "shuffle": alarm["shuffle"],
                 "count": len(self.__scheduled_alarm_uuids),
             },
             device_id=alarm_uuid,
@@ -364,6 +374,8 @@ class Alarmclock(CleepModule):
                     "minute": alarm["time"]["minute"],
                     "timeout": alarm["timeout"],
                     "volume": alarm["volume"],
+                    "repeat": alarm["repeat"],
+                    "shuffle": alarm["shuffle"],
                 },
                 device_id=alarm_uuid,
             )
@@ -438,6 +450,8 @@ class Alarmclock(CleepModule):
                         "timeout": alarm["timeout"],
                         "volume": alarm["volume"],
                         "count": len(self.__scheduled_alarm_uuids),
+                        "repeat": alarm["repeat"],
+                        "shuffle": alarm["shuffle"],
                     },
                     device_id=alarm_uuid,
                 )
@@ -461,6 +475,8 @@ class Alarmclock(CleepModule):
                         "timeout": alarm["timeout"],
                         "volume": alarm["volume"],
                         "count": len(self.__scheduled_alarm_uuids),
+                        "repeat": alarm["repeat"],
+                        "shuffle": alarm["shuffle"],
                     },
                     device_id=alarm_uuid,
                 )

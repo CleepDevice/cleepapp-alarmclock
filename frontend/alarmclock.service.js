@@ -24,13 +24,15 @@ angular
 function($rootScope, rpcService) {
     var self = this;
 
-    self.addAlarm = function(hour, minute, timeout, days, nonWorkingDays, volume) {
+    self.addAlarm = function(hour, minute, timeout, days, nonWorkingDays, volume, repeat, shuffle) {
         return rpcService.sendCommand('add_alarm', 'alarmclock', {
             alarm_time: { hour, minute },
             timeout,
             days,
             non_working_days: nonWorkingDays,
             volume,
+            repeat,
+            shuffle,
         });
     };
 

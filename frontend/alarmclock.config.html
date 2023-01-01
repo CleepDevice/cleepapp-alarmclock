@@ -56,6 +56,24 @@
             </md-input-container>
         </md-list-item>
 
+        <md-list-item class="md-2-line">
+            <md-icon md-svg-icon="chevron-right"></md-icon>
+            <div class="md-list-item-text">
+                <h3>Repeat playlist</h3>
+                <p>Repeat playlist while end of it reached. This prevents mute alarm.</p>
+            </div>
+            <md-checkbox class="md-secondary" ng-model="alarmclockCtl.playlistRepeat"></md-checkbox>
+        </md-list-item>
+
+        <md-list-item class="md-2-line">
+            <md-icon md-svg-icon="chevron-right"></md-icon>
+            <div class="md-list-item-text">
+                <h3>Shuffle playlist</h3>
+                <p>When end of playlist is reached, shuffle it again</p>
+            </div>
+            <md-checkbox class="md-secondary" ng-model="alarmclockCtl.playlistShuffle"></md-checkbox>
+        </md-list-item>
+
         <md-list-item>
             <p></p>
             <md-button ng-click="alarmclockCtl.addAlarm()" class="md-raised md-primary md-secondary">
@@ -77,7 +95,9 @@
                     Enabled {{ alarm.days | hrDays }} -
                     {{ alarm.nonWorkingDays ? 'Enabled on non-working-days' : 'Disabled on non-working-days' }} -
                     Timeout {{ alarm.timeout }} mins -
-                    Volume at {{ alarm.volume }}%
+                    Volume at {{ alarm.volume }}% -
+                    Repeat {{ alarm.repeat ? 'enabled' : 'disabled' }} -
+                    Shuffle {{ alarm.shuffle ? 'enabled' : 'disabled' }}
                 </p> 
             </div>
             <md-button ng-click="alarmclockCtl.editAlarm(alarm)" class="md-raised md-primary md-secondary">

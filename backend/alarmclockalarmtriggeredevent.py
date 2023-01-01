@@ -11,7 +11,7 @@ class AlarmclockAlarmTriggeredEvent(Event):
 
     EVENT_NAME = "alarmclock.alarm.triggered"
     EVENT_PROPAGATE = True
-    EVENT_PARAMS = ["hour", "minute", "timeout", "volume"]
+    EVENT_PARAMS = ["hour", "minute", "timeout", "volume", "repeat", "shuffle"]
 
     def __init__(self, params):
         """

@@ -6,12 +6,11 @@
 
 ### Changed
 - Improve UI (add edit alarm)
-
-### Fixed
-- Fix issue during alarm scheduling
+- Add options to configure repeat and shuffle playlist
 
 ### Fixed
 - Fix issue when multiple alarms scheduled for today and tomorrow. Only one was scheduled
+- Fix issue during alarm scheduling
 
 ## [1.0.0] - 2022-01-15
 

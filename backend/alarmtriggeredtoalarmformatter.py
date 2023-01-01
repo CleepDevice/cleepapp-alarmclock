@@ -32,5 +32,7 @@ class AlarmTriggeredToAlarmFormatter(ProfileFormatter):
         profile.timeout = event_params["timeout"]
         profile.volume = event_params["volume"]
         profile.status = profile.STATUS_TRIGGERED
+        profile.repeat = event_params["repeat"]
+        profile.shuffle = event_params["shuffle"]
 
         return profile

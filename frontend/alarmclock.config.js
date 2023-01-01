@@ -27,6 +27,8 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
             { label: 'Sunday', val: 'sun' },
         ];
         self.selectedDays = [];
+        self.playlistRepeat = true;
+        self.playlistShuffle = false;
 
         self.$onInit = function() {
             cleepService.getModuleConfig('alarmclock');
@@ -43,7 +45,7 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
                 sat: self.selectedDays.indexOf('sat') !== -1,
                 sun: self.selectedDays.indexOf('sun') !== -1,
             };
-            alarmclockService.addAlarm(self.hour, self.minute, self.timeout, days, self.nonWorkingDays, self.volume)
+            alarmclockService.addAlarm(self.hour, self.minute, self.timeout, days, self.nonWorkingDays, self.volume, self.playlistRepeat, self.playlistShuffle)
                 .then(resp => {
                     toastService.success('Alarm added');
                     cleepService.reloadDevices();
@@ -58,6 +60,8 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
             self.minute = 0;
             self.timeout = 15;
             self.volume = 50;
+            self.playlistRepeat = true;
+            self.playlistShuffle = false;
         };
 
         self.removeAlarm = function(alarmUuid, showToast) {
@@ -87,6 +91,8 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
             self.minute = alarm.time.minute;
             self.timeout = alarm.timeout;
             self.volume = alarm.volume;
+            self.playlistRepeat = alarm.repeat;
+            self.playlistShuffle = alarm.shuffle;
         };
 
         self.toggleAlarm = function(alarmUuid) {
