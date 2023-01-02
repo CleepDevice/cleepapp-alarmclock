@@ -35,5 +35,7 @@ class AlarmScheduledToAlarmFormatter(ProfileFormatter):
         profile.volume = event_params["volume"]
         profile.count = event_params["count"]
         profile.status = profile.STATUS_SCHEDULED
+        profile.repeat = event_params["repeat"]
+        profile.shuffle = event_params["shuffle"]
 
         return profile
