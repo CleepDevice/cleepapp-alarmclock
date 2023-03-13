@@ -1,4 +1,4 @@
-# Alarm clock
+# Alarm clock [![Coverage Status](https://coveralls.io/repos/github/CleepDevice/cleepapp-alarmclock/badge.svg)](https://coveralls.io/github/CleepDevice/cleepapp-alarmclock)
 
 Simple alarm clock application for Cleep. It allows to trigger and schedule alarms.
 

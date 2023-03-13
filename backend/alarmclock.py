@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from datetime import date, timedelta, datetime
-import os
 from threading import Timer
 from cleep.exception import CommandError
 from cleep.common import CATEGORIES
@@ -16,16 +15,16 @@ class Alarmclock(CleepModule):
 
     MODULE_LABEL = "Alarm clock"
     MODULE_AUTHOR = "Cleep"
-    MODULE_VERSION = "1.0.0"
+    MODULE_VERSION = "1.1.0"
     MODULE_DEPS = []
     MODULE_DESCRIPTION = "Build your own smart alarm clock"
     MODULE_LONGDESCRIPTION = "Configure time to wake up everyday"
     MODULE_TAGS = ["wakeup", "music"]
     MODULE_CATEGORY = CATEGORIES.APPLICATION
-    MODULE_URLINFO = "https://github.com/tangb/cleepapp-alarmclock"
+    MODULE_URLINFO = "https://github.com/CleepDevice/cleepapp-alarmclock"
     MODULE_URLHELP = None
     MODULE_URLSITE = None
-    MODULE_URLBUGS = "https://github.com/tangb/cleepapp-alarmclock/issues"
+    MODULE_URLBUGS = "https://github.com/CleepDevice/cleepapp-alarmclock/issues"
 
     MODULE_CONFIG_FILE = "alarmclock.conf"
     DEFAULT_CONFIG = {}
@@ -97,7 +96,9 @@ class Alarmclock(CleepModule):
                 event["params"], self.WEEKDAYS_MAPPING[event["params"]["weekday"]]
             )
 
-    def add_alarm(self, alarm_time, timeout, days, non_working_days, volume, repeat, shuffle):
+    def add_alarm(
+        self, alarm_time, timeout, days, non_working_days, volume, repeat, shuffle
+    ):
         """
         Add new alarm
 
@@ -165,7 +166,7 @@ class Alarmclock(CleepModule):
                     "name": "volume",
                     "value": volume,
                     "type": int,
-                    "validator": lambda v: v > 0 and v <= 100,
+                    "validator": lambda v: 0 < v <= 100,
                     "message": "Volume must be between 1 and 100",
                 },
                 {"name": "repeat", "value": repeat, "type": bool},
