@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [1.1.0] - 2023-03-13
+## [1.1.0] - 2023-03-13
 ### Added
 - Send unscheduled alarm event
 
