@@ -228,12 +228,12 @@ class Alarmclock(CleepModule):
             self.__scheduled_alarm_uuids.remove(alarm_uuid)
             self.alarm_unscheduled_event.send(
                 params={
-                    "hour": alarm["time"]["hour"],
-                    "minute": alarm["time"]["minute"],
-                    "timeout": alarm["timeout"],
-                    "volume": alarm["volume"],
-                    "repeat": alarm["repeat"],
-                    "shuffle": alarm["shuffle"],
+                    "hour": alarm.get("time", {}).get("hour", 12),
+                    "minute": alarm.get("time", {}).get("minute", 0),
+                    "timeout": alarm.get("timeout", 500),
+                    "volume": alarm.get("volume", 50),
+                    "repeat": alarm.get("repeat", False),
+                    "shuffle": alarm.get("shuffle", False),
                     "count": len(self.__scheduled_alarm_uuids),
                 },
                 device_id=alarm_uuid,
@@ -279,12 +279,12 @@ class Alarmclock(CleepModule):
         event = self.alarm_scheduled_event if enabled else self.alarm_unscheduled_event
         event.send(
             params={
-                "hour": alarm["time"]["hour"],
-                "minute": alarm["time"]["minute"],
-                "timeout": alarm["timeout"],
-                "volume": alarm["volume"],
-                "repeat": alarm["repeat"],
-                "shuffle": alarm["shuffle"],
+                "hour": alarm.get("time", {}).get("hour", 12),
+                "minute": alarm.get("time", {}).get("minute", 0),
+                "timeout": alarm.get("timeout", 500),
+                "volume": alarm.get("volume", 50),
+                "repeat": alarm.get("repeat", False),
+                "shuffle": alarm.get("shuffle", False),
                 "count": len(self.__scheduled_alarm_uuids),
             },
             device_id=alarm_uuid,
@@ -371,12 +371,12 @@ class Alarmclock(CleepModule):
 
             self.alarm_triggered_event.send(
                 params={
-                    "hour": alarm["time"]["hour"],
-                    "minute": alarm["time"]["minute"],
-                    "timeout": alarm["timeout"],
-                    "volume": alarm["volume"],
-                    "repeat": alarm["repeat"],
-                    "shuffle": alarm["shuffle"],
+                    "hour": alarm.get("time", {}).get("hour", 12),
+                    "minute": alarm.get("time", {}).get("minute", 0),
+                    "timeout": alarm.get("timeout", 500),
+                    "volume": alarm.get("volume", 50),
+                    "repeat": alarm.get("repeat", False),
+                    "shuffle": alarm.get("shuffle", False),
                 },
                 device_id=alarm_uuid,
             )
@@ -446,13 +446,13 @@ class Alarmclock(CleepModule):
                 self.__scheduled_alarm_uuids.add(alarm_uuid)
                 self.alarm_scheduled_event.send(
                     params={
-                        "hour": alarm["time"]["hour"],
-                        "minute": alarm["time"]["minute"],
-                        "timeout": alarm["timeout"],
-                        "volume": alarm["volume"],
+                        "hour": alarm.get("time", {}).get("hour", 12),
+                        "minute": alarm.get("time", {}).get("minute", 0),
+                        "timeout": alarm.get("timeout", 500),
+                        "volume": alarm.get("volume", 50),
                         "count": len(self.__scheduled_alarm_uuids),
-                        "repeat": alarm["repeat"],
-                        "shuffle": alarm["shuffle"],
+                        "repeat": alarm.get("repeat", False),
+                        "shuffle": alarm.get("shuffle", False),
                     },
                     device_id=alarm_uuid,
                 )
@@ -471,13 +471,13 @@ class Alarmclock(CleepModule):
                 self.__scheduled_alarm_uuids.add(alarm_uuid)
                 self.alarm_scheduled_event.send(
                     params={
-                        "hour": alarm["time"]["hour"],
-                        "minute": alarm["time"]["minute"],
-                        "timeout": alarm["timeout"],
-                        "volume": alarm["volume"],
+                        "hour": alarm.get("time", {}).get("hour", 12),
+                        "minute": alarm.get("time", {}).get("minute", 0),
+                        "timeout": alarm.get("timeout", 500),
+                        "volume": alarm.get("volume", 50),
                         "count": len(self.__scheduled_alarm_uuids),
-                        "repeat": alarm["repeat"],
-                        "shuffle": alarm["shuffle"],
+                        "repeat": alarm.get("repeat", False),
+                        "shuffle": alarm.get("shuffle", False),
                     },
                     device_id=alarm_uuid,
                 )
