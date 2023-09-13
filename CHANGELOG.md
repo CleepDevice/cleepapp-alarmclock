@@ -4,6 +4,12 @@
 ### Fixed
 - #1410 error with repeat alarm config field while not exists after update
 
+### Added
+- Clock widget is now in app desc file
+
+### Removed
+- Angular clock widget
+
 ## [1.1.0] - 2023-03-13
 ### Added
 - Send unscheduled alarm event

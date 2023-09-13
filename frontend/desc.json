@@ -1,14 +1,72 @@
 {
     "icon": "alarm",
     "global": {
-        "js": ["alarmclock.service.js", "alarmclock.widget.js"],
-        "html": ["alarmclock.widget.html"],
+        "js": ["alarmclock.service.js", "alarmclock.filter.js"],
+        "html": [],
         "css": []
     },
     "config": {
         "js": ["alarmclock.config.js"],
         "html": ["alarmclock.config.html"],
         "css": []
+    },
+    "widgets": {
+        "alarmclock": {
+            "content": "<span class=\"md-display-1\">{{ device.time.hour | padzero }}:{{ device.time.minute | padzero }}</span>",
+            "footer": [
+                {
+                    "icon": "briefcase",
+                    "tooltip": "Enabled on non-working-days",
+                    "condition": {
+                        "variable": "device.nonWorkingDays",
+                        "operator": "===",
+                        "value": true
+                    }
+                },
+                {
+                    "icon": "briefcase-off",
+                    "tooltip": "Disabled on non-working-days",
+                    "condition": {
+                        "variable": "device.nonWorkingDays",
+                        "operator": "===",
+                        "value": false
+                    }
+                },
+                {
+                    "icon": "calendar-clock",
+                    "label": "{{ device.days | alarmclockDays }}"
+                },
+                {
+                    "icon": "alarm",
+                    "tooltip": "Enabled",
+                    "action": {
+                        "command": "toggle_alarm",
+                        "to": "alarmclock",
+                        "uuid": "alarm_uuid"
+                    },
+                    "condition": {
+                        "variable": "device.enabled",
+                        "operator": "===",
+                        "value": true
+                    }
+                },
+                {
+                    "icon": "alarm-off",
+                    "tooltip": "Disabled",
+                    "class": "md-accent",
+                    "action": {
+                        "command": "toggle_alarm",
+                        "to": "alarmclock",
+                        "uuid": "alarm_uuid"
+                    },
+                    "condition": {
+                        "variable": "device.enabled",
+                        "operator": "===",
+                        "value": false
+                    }
+                }
+            ]
+        }
     }
 }
-    
+
