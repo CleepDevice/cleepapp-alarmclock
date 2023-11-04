@@ -5,26 +5,27 @@
  */
 angular
 .module('Cleep')
-.directive('alarmclockConfigComponent', ['$rootScope', 'cleepService', 'toastService', 'alarmclockService', '$location',
-function($rootScope, cleepService, toastService, alarmclockService, $location) {
+.directive('alarmclockConfigComponent', ['$rootScope', 'cleepService', 'toastService', 'alarmclockService', '$location', '$filter',
+function($rootScope, cleepService, toastService, alarmclockService, $location, $filter) {
 
     var alarmclockConfigController = function($scope) {
         var self = this;
+        self.defaultTime = new Date(1970, 0, 1, 8, 0);
         self.config = {};
         self.devices = [];
+        self.devicesList = [];
         self.nonWorkingDays = false;
-        self.hour = 8;
-        self.minute = 0;
+        self.time = self.defaultTime;
         self.timeout = 15;
         self.volume = 50;
         self.days = [
-            { label: 'Monday', val: 'mon' },
-            { label: 'Tuesday', val: 'tue' },
-            { label: 'Wednesday', val: 'wed' },
-            { label: 'Thursday', val: 'thu' },
-            { label: 'Friday', val: 'fri' },
-            { label: 'Saturday', val: 'sat' },
-            { label: 'Sunday', val: 'sun' },
+            { label: 'Monday', value: 'mon' },
+            { label: 'Tuesday', value: 'tue' },
+            { label: 'Wednesday', value: 'wed' },
+            { label: 'Thursday', value: 'thu' },
+            { label: 'Friday', value: 'fri' },
+            { label: 'Saturday', value: 'sat' },
+            { label: 'Sunday', value: 'sun' },
         ];
         self.selectedDays = [];
         self.playlistRepeat = true;
@@ -45,7 +46,8 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
                 sat: self.selectedDays.indexOf('sat') !== -1,
                 sun: self.selectedDays.indexOf('sun') !== -1,
             };
-            alarmclockService.addAlarm(self.hour, self.minute, self.timeout, days, self.nonWorkingDays, self.volume, self.playlistRepeat, self.playlistShuffle)
+
+            alarmclockService.addAlarm(self.time.getHours(), self.time.getMinutes(), self.timeout, days, self.nonWorkingDays, self.volume, self.playlistRepeat, self.playlistShuffle)
                 .then(resp => {
                     toastService.success('Alarm added');
                     cleepService.reloadDevices();
@@ -54,49 +56,51 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
         };
 
         self.clearForm = function() {
-            while (self.selectedDays.length > 0) self.selectedDays.pop();
+            self.selectedDays.splice(0, self.selectedDays.length);
             self.nonWorkingDays = false;
-            self.hour = 8;
-            self.minute = 0;
+            self.time = self.defaultTime;
             self.timeout = 15;
             self.volume = 50;
             self.playlistRepeat = true;
             self.playlistShuffle = false;
         };
 
-        self.removeAlarm = function(alarmUuid, showToast) {
+        self.removeAlarm = function(device) {
+            self.__removeAlarm(device.uuid, true);
+        };
+
+        self.__removeAlarm = function(alarmUuid, showToast) {
             alarmclockService.removeAlarm(alarmUuid)
                 .then(resp => {
-                    if (showToast === undefined || showToast === true) {
+                    if (showToast) {
                         toastService.success('Alarm deleted');
                     }
                     cleepService.reloadDevices();
                 });
         };
 
-        self.editAlarm = function(alarm) {
-            self.duplicateAlarm(alarm);
-            self.removeAlarm(alarm.uuid, false);
+        self.editAlarm = function(device) {
+            self.duplicateAlarm(device);
+            self.__removeAlarm(device.uuid, false);
         };
 
-        self.duplicateAlarm = function(alarm) {
-            while (self.selectedDays.length > 0) self.selectedDays.pop();
-            for (const [day, enabled] of Object.entries(alarm.days)) {
+        self.duplicateAlarm = function(device) {
+            self.selectedDays.splice(0, self.selectedDays.length);
+            for (const [day, enabled] of Object.entries(device.days)) {
                 if (enabled) {
                     self.selectedDays.push(day);
                 }
             }
-            self.nonWorkingDays = alarm.nonWorkingDays;
-            self.hour = alarm.time.hour;
-            self.minute = alarm.time.minute;
-            self.timeout = alarm.timeout;
-            self.volume = alarm.volume;
-            self.playlistRepeat = alarm.repeat;
-            self.playlistShuffle = alarm.shuffle;
+            self.nonWorkingDays = device.nonWorkingDays;
+            self.time = new Date(1970, 0, 1, device.time.hour, device.time.minute);
+            self.timeout = device.timeout;
+            self.volume = device.volume;
+            self.playlistRepeat = device.repeat;
+            self.playlistShuffle = device.shuffle;
         };
 
-        self.toggleAlarm = function(alarmUuid) {
-            alarmclockService.toggleAlarm(alarmUuid)
+        self.toggleAlarm = function(device) {
+            alarmclockService.toggleAlarm(device.uuid)
                 .then(resp => {
                     var message = resp.data ? 'Alarm enabled' : 'Alarm disabled';
                     toastService.success(message);
@@ -112,22 +116,68 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
             }
         };
 
-        $rootScope.$watch(function() {
-            return cleepService.modules['alarmclock'].config;
-        }, function(newConfig, oldConfig) {
-            if(newConfig && Object.keys(newConfig).length) {
-                cleepService.syncVar(self.config, newConfig);
-            }
-        });
+        $rootScope.$watch(
+            () => cleepService.modules['alarmclock'].config,
+            (newConfig) => {
+                if(newConfig && Object.keys(newConfig).length) {
+                    cleepService.syncVar(self.config, newConfig);
+                }
+            },
+        );
 
-        $rootScope.$watchCollection(function() {
-            return cleepService.devices;
-        }, function(newDevices, oldDevices) {
-            if(newDevices && newDevices.length) {
+        $rootScope.$watchCollection(
+            () => cleepService.devices,
+            (newDevices) => {
+                if (!newDevices) {
+                    return;
+                }
+
                 const devices = cleepService.getModuleDevices('alarmclock');
                 cleepService.syncVar(self.devices, devices);
-            }
-        });
+
+                self.devicesList.splice(0, self.devicesList.length);
+                for (const [index, device] of devices.entries()) {
+                    const time = $filter('padzero')(device.time.hour) + ':' + $filter('padzero')(device.time.minute);
+                    const repeat = device.repeat ? 'on' : 'off';
+                    const shuffle = device.shuffle ? 'on' : 'off';
+                    const nonWorkingDays = device.nonWorkingDays ? 'enabled' : 'disabled';
+
+                    self.devicesList.push({
+                        icon: device.enabled ? 'alarm-check' : 'alarm-off',
+                        iconClass: device.enabled ? '' : 'md-accent',
+                        title: 'Start at ' + time + ' on ' + $filter('hrDays')(device.days),
+                        subtitle: 'Timeout after ' + device.timeout + ' mins, volume at ' + device.volume  + '%, repeat ' + repeat + ', shuffle ' + shuffle + ', ' + nonWorkingDays + ' on non-working days',
+                        clicks: [
+                            {
+                                icon: 'pencil',
+                                tooltip: 'Edit alarm',
+                                click: self.editAlarm,
+                                meta: { device },
+                            },
+                            {
+                                icon: 'content-duplicate',
+                                tooltip: 'Copy alarm',
+                                click: self.duplicateAlarm,
+                                meta: { device },
+                            },
+                            {
+                                icon: device.enabled ? 'alarm-off' : 'alarm-check',
+                                tooltip: device.enabled ? 'Turn off alarm' : 'Turn on alarm',
+                                click: self.toggleAlarm,
+                                meta: { device },
+                            },
+                            {
+                                icon: 'delete',
+                                tooltip: 'Delete alarm',
+                                click: self.removeAlarm,
+                                class: 'md-accent',
+                                meta: { device },
+                            },
+                        ],
+                    });
+                }
+            },
+        );
     };
 
     return {
@@ -135,6 +185,6 @@ function($rootScope, cleepService, toastService, alarmclockService, $location) {
         replace: true,
         scope: true,
         controller: alarmclockConfigController,
-        controllerAs: 'alarmclockCtl',
+        controllerAs: '$ctrl',
     };
 }]);

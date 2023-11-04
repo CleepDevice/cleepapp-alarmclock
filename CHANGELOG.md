@@ -7,6 +7,9 @@
 ### Added
 - Clock widget is now in app desc file
 
+### Changed
+- Migrate to Cleep components
+
 ### Removed
 - Angular clock widget
 
