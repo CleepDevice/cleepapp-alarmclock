@@ -135,14 +135,14 @@ function($rootScope, cleepService, toastService, alarmclockService, $location, $
                 const devices = cleepService.getModuleDevices('alarmclock');
                 cleepService.syncVar(self.devices, devices);
 
-                self.devicesList.splice(0, self.devicesList.length);
+                const devicesList = [];
                 for (const [index, device] of devices.entries()) {
                     const time = $filter('padzero')(device.time.hour) + ':' + $filter('padzero')(device.time.minute);
                     const repeat = device.repeat ? 'on' : 'off';
                     const shuffle = device.shuffle ? 'on' : 'off';
                     const nonWorkingDays = device.nonWorkingDays ? 'enabled' : 'disabled';
 
-                    self.devicesList.push({
+                    devicesList.push({
                         icon: device.enabled ? 'alarm-check' : 'alarm-off',
                         iconClass: device.enabled ? '' : 'md-accent',
                         title: 'Start at ' + time + ' on ' + $filter('hrDays')(device.days),
@@ -176,6 +176,7 @@ function($rootScope, cleepService, toastService, alarmclockService, $location, $
                         ],
                     });
                 }
+                self.devicesList = devicesList;
             },
         );
     };
