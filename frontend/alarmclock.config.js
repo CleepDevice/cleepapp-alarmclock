@@ -144,7 +144,7 @@ function($rootScope, cleepService, toastService, alarmclockService, $location, $
 
                     devicesList.push({
                         icon: device.enabled ? 'alarm-check' : 'alarm-off',
-                        iconClass: device.enabled ? '' : 'md-accent',
+                        iconStyle: device.enabled ? '' : 'md-accent',
                         title: 'Start at ' + time + ' on ' + $filter('hrDays')(device.days),
                         subtitle: 'Timeout after ' + device.timeout + ' mins, volume at ' + device.volume  + '%, repeat ' + repeat + ', shuffle ' + shuffle + ', ' + nonWorkingDays + ' on non-working days',
                         clicks: [
@@ -170,7 +170,7 @@ function($rootScope, cleepService, toastService, alarmclockService, $location, $
                                 icon: 'delete',
                                 tooltip: 'Delete alarm',
                                 click: self.removeAlarm,
-                                class: 'md-accent',
+                                style: 'md-accent',
                                 meta: { device },
                             },
                         ],
