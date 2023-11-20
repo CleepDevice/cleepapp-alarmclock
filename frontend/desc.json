@@ -37,6 +37,7 @@
                     "label": "{{ device.days | alarmclockDays }}"
                 },
                 {
+                    "type": "button",
                     "icon": "alarm",
                     "tooltip": "Enabled",
                     "action": {
@@ -51,9 +52,10 @@
                     }
                 },
                 {
+                    "type": "button",
                     "icon": "alarm-off",
                     "tooltip": "Disabled",
-                    "class": "md-accent",
+                    "style": "md-accent",
                     "action": {
                         "command": "toggle_alarm",
                         "to": "alarmclock",
