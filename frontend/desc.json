@@ -34,7 +34,8 @@
                 },
                 {
                     "icon": "calendar-clock",
-                    "label": "{{ device.days | alarmclockDays }}"
+                    "attr": "days",
+                    "filter": "alarmclockDays"
                 },
                 {
                     "type": "button",
