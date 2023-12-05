@@ -12,13 +12,30 @@
     },
     "widgets": {
         "alarmclock": {
-            "content": "<span class=\"md-display-1\">{{ device.time.hour | padzero }}:{{ device.time.minute | padzero }}</span>",
+            "content": {
+                "layout": {
+                    "align": "center center"
+                },
+                "items": [
+                    {
+                        "attr": "time.hour",
+                        "filter": "padzero"
+                    },
+                    {
+                        "text": ":"
+                    },
+                    {
+                        "attr": "time.minute",
+                        "filter": "padzero"
+                    }
+                ]
+            },
             "footer": [
                 {
                     "icon": "briefcase",
                     "tooltip": "Enabled on non-working-days",
                     "condition": {
-                        "variable": "device.nonWorkingDays",
+                        "attr": "nonWorkingDays",
                         "operator": "===",
                         "value": true
                     }
@@ -27,7 +44,7 @@
                     "icon": "briefcase-off",
                     "tooltip": "Disabled on non-working-days",
                     "condition": {
-                        "variable": "device.nonWorkingDays",
+                        "attr": "nonWorkingDays",
                         "operator": "===",
                         "value": false
                     }
@@ -47,7 +64,7 @@
                         "uuid": "alarm_uuid"
                     },
                     "condition": {
-                        "variable": "device.enabled",
+                        "attr": "enabled",
                         "operator": "===",
                         "value": true
                     }
@@ -63,7 +80,7 @@
                         "uuid": "alarm_uuid"
                     },
                     "condition": {
-                        "variable": "device.enabled",
+                        "attr": "enabled",
                         "operator": "===",
                         "value": false
                     }
