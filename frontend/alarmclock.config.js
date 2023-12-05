@@ -120,7 +120,8 @@ function($rootScope, cleepService, toastService, alarmclockService, $location, $
             () => cleepService.modules['alarmclock'].config,
             (newConfig) => {
                 if(newConfig && Object.keys(newConfig).length) {
-                    cleepService.syncVar(self.config, newConfig);
+                    //cleepService.syncVar(self.config, newConfig);
+                    self.config = newConfig;
                 }
             },
         );
@@ -128,12 +129,7 @@ function($rootScope, cleepService, toastService, alarmclockService, $location, $
         $rootScope.$watchCollection(
             () => cleepService.devices,
             (newDevices) => {
-                if (!newDevices) {
-                    return;
-                }
-
-                const devices = cleepService.getModuleDevices('alarmclock');
-                cleepService.syncVar(self.devices, devices);
+                self.devices = cleepService.getModuleDevices('alarmclock');
 
                 const devicesList = [];
                 for (const [index, device] of devices.entries()) {
