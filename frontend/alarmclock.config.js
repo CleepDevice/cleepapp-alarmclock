@@ -132,7 +132,7 @@ function($rootScope, cleepService, toastService, alarmclockService, $location, $
                 self.devices = cleepService.getModuleDevices('alarmclock');
 
                 const devicesList = [];
-                for (const [index, device] of devices.entries()) {
+                for (const [index, device] of self.devices.entries()) {
                     const time = $filter('padzero')(device.time.hour) + ':' + $filter('padzero')(device.time.minute);
                     const repeat = device.repeat ? 'on' : 'off';
                     const shuffle = device.shuffle ? 'on' : 'off';

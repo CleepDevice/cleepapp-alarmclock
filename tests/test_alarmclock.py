@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from cleep.libs.tests import session
 import unittest
 import logging
 import datetime
@@ -21,14 +22,16 @@ from cleep.exception import (
     CommandError,
     Unauthorized,
 )
-from cleep.libs.tests import session
-from mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock
+from cleep.libs.tests.common import get_log_level
+
+LOG_LEVEL = get_log_level()
 
 
 class TestsAlarmclock(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(
-            level=logging.FATAL,
+            level=LOG_LEVEL,
             format=u"%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s",
         )
         self.session = session.TestSession(self)
@@ -36,10 +39,10 @@ class TestsAlarmclock(unittest.TestCase):
     def tearDown(self):
         self.session.clean()
 
-    def init(self, start=True, mocks=True):
-        self.module = self.session.setup(Alarmclock)
+    def init(self, start=True, mock_fn=True, mock_on_start=True):
+        self.module = self.session.setup(Alarmclock, mock_on_start=mock_on_start)
 
-        if mocks:
+        if mock_fn:
             self.module._set_today_is_non_working_day = Mock()
             self.module._set_tomorrow_is_non_working_day = Mock()
 
@@ -47,7 +50,7 @@ class TestsAlarmclock(unittest.TestCase):
             self.session.start_module(self.module)
 
     def test__on_start(self):
-        self.init(False)
+        self.init(False, mock_fn=True, mock_on_start=False)
         self.module._schedule_alarm = Mock()
         self.module.is_module_loaded = Mock(return_value=True)
 
@@ -59,7 +62,7 @@ class TestsAlarmclock(unittest.TestCase):
         self.assertTrue(self.module.has_audioplayer)
 
     def test__on_start_no_audioplayer(self):
-        self.init(False)
+        self.init(False, mock_fn=True, mock_on_start=False)
         self.module._set_today_is_non_working_day = Mock()
         self.module._set_tomorrow_is_non_working_day = Mock()
         self.module._schedule_alarm = Mock()
@@ -77,8 +80,8 @@ class TestsAlarmclock(unittest.TestCase):
 
         self.module.on_event(event)
 
-        self.assertEqual(self.module._set_today_is_non_working_day.call_count, 1)
-        self.assertEqual(self.module._set_tomorrow_is_non_working_day.call_count, 1)
+        self.assertEqual(self.module._set_today_is_non_working_day.call_count, 0)
+        self.assertEqual(self.module._set_tomorrow_is_non_working_day.call_count, 0)
 
     def test_on_event_time_event_not_midnight(self):
         self.init()
@@ -94,8 +97,8 @@ class TestsAlarmclock(unittest.TestCase):
 
         self.module.on_event(event)
 
-        self.assertEqual(self.module._set_today_is_non_working_day.call_count, 1)
-        self.assertEqual(self.module._set_tomorrow_is_non_working_day.call_count, 1)
+        self.assertEqual(self.module._set_today_is_non_working_day.call_count, 0)
+        self.assertEqual(self.module._set_tomorrow_is_non_working_day.call_count, 0)
 
     def test_on_event_time_event_midnight(self):
         self.init()
@@ -111,8 +114,8 @@ class TestsAlarmclock(unittest.TestCase):
 
         self.module.on_event(event)
 
-        self.assertEqual(self.module._set_today_is_non_working_day.call_count, 2)
-        self.assertEqual(self.module._set_tomorrow_is_non_working_day.call_count, 2)
+        self.assertEqual(self.module._set_today_is_non_working_day.call_count, 1)
+        self.assertEqual(self.module._set_tomorrow_is_non_working_day.call_count, 1)
 
     def test_add_alarm(self):
         self.init()
@@ -402,7 +405,7 @@ class TestsAlarmclock(unittest.TestCase):
         self.assertEqual(str(cm.exception), "Alarm does not exist")
 
     def test__set_today_is_non_working_day(self):
-        self.init(start=False, mocks=False)
+        self.init(start=False, mock_fn=False)
         is_today_non_working_day_mock = self.session.make_mock_command(
             "is_today_non_working_day", True
         )
@@ -418,7 +421,7 @@ class TestsAlarmclock(unittest.TestCase):
         )
 
     def test__set_today_is_non_working_day_failed(self):
-        self.init(start=False, mocks=False)
+        self.init(start=False, mock_fn=False)
         is_today_non_working_day_mock = self.session.make_mock_command(
             "is_today_non_working_day", True, fail=True
         )
@@ -436,7 +439,7 @@ class TestsAlarmclock(unittest.TestCase):
     def test__set_tomorrow_is_non_working_day(self, date_mock):
         today = datetime.date(2021, 12, 15)
         date_mock.today.return_value = today
-        self.init(start=False, mocks=False)
+        self.init(start=False, mock_fn=False)
         is_module_loaded = self.session.make_mock_command("is_module_loaded", True)
         self.session.add_mock_command(is_module_loaded)
         is_non_working_day_mock = self.session.make_mock_command(
@@ -458,7 +461,7 @@ class TestsAlarmclock(unittest.TestCase):
     def test__set_tomorrow_is_non_working_day_failed(self, date_mock):
         today = datetime.date(2021, 12, 15)
         date_mock.today.return_value = today
-        self.init(start=False, mocks=False)
+        self.init(start=False, mock_fn=False)
         is_module_loaded = self.session.make_mock_command("is_module_loaded", True)
         self.session.add_mock_command(is_module_loaded)
         is_non_working_day_mock = self.session.make_mock_command(
@@ -1084,7 +1087,7 @@ class TestAlarmclockAlarmTriggeredEvent(unittest.TestCase):
 class TestAlarmclockAlarmScheduledEvent(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(
-            level=logging.FATAL,
+            level=LOG_LEVEL,
             format="%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s",
         )
         self.session = session.TestSession(self)
@@ -1108,7 +1111,7 @@ class TestAlarmclockAlarmScheduledEvent(unittest.TestCase):
 class TestAlarmclockAlarmUnscheduledEvent(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(
-            level=logging.FATAL,
+            level=LOG_LEVEL,
             format="%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s",
         )
         self.session = session.TestSession(self)
@@ -1132,7 +1135,7 @@ class TestAlarmclockAlarmUnscheduledEvent(unittest.TestCase):
 class TestAlarmclockAlarmStoppedEvent(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(
-            level=logging.FATAL,
+            level=LOG_LEVEL,
             format="%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s",
         )
         self.session = session.TestSession(self)
@@ -1154,7 +1157,7 @@ class TestAlarmclockAlarmStoppedEvent(unittest.TestCase):
 class TestsAlarmScheduledToAlarmFormatter(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(
-            level=logging.FATAL,
+            level=LOG_LEVEL,
             format=u"%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s",
         )
         events_broker = Mock()
@@ -1187,7 +1190,7 @@ class TestsAlarmScheduledToAlarmFormatter(unittest.TestCase):
 class TestsAlarmUnscheduledToAlarmFormatter(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(
-            level=logging.FATAL,
+            level=LOG_LEVEL,
             format=u"%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s",
         )
         events_broker = Mock()
@@ -1220,7 +1223,7 @@ class TestsAlarmUnscheduledToAlarmFormatter(unittest.TestCase):
 class TestsAlarmTriggeredToAlarmFormatter(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(
-            level=logging.FATAL,
+            level=LOG_LEVEL,
             format=u"%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s",
         )
         events_broker = Mock()
@@ -1251,7 +1254,7 @@ class TestsAlarmTriggeredToAlarmFormatter(unittest.TestCase):
 class TestsAlarmStoppedToAlarmFormatter(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(
-            level=logging.FATAL,
+            level=LOG_LEVEL,
             format=u"%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s",
         )
         events_broker = Mock()

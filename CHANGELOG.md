@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [UNRELEASED]
+## [1.2.0] - 2024-01-12
 ### Fixed
 - #1410 error with repeat alarm config field while not exists after update
 
