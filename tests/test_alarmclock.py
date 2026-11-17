@@ -4,9 +4,7 @@ from cleep.libs.tests import session
 import unittest
 import logging
 import datetime
-import sys
 
-sys.path.append("../")
 from backend.alarmclock import Alarmclock
 from backend.alarmclockalarmtriggeredevent import AlarmclockAlarmTriggeredEvent
 from backend.alarmclockalarmscheduledevent import AlarmclockAlarmScheduledEvent
